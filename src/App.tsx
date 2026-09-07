@@ -34,6 +34,7 @@ interface MetricData {
   words: number;
   characters: number;
   lines: number;
+  hasImmutable: boolean;
   content: string;
   wordSet: Set<string>;
   loading: boolean;
@@ -66,6 +67,7 @@ export function App() {
         words: 0,
         characters: 0,
         lines: 0,
+        hasImmutable: false,
         content: '',
         wordSet: new Set(),
         loading: true,
@@ -97,10 +99,13 @@ export function App() {
       .split(/\s+/)
       .filter(Boolean);
 
+    const hasImmutable = /\bimmutable\b/i.test(text);
+
     return {
       words: text.trim() ? text.trim().split(/\s+/).length : 0,
       characters: text.length,
       lines: text ? text.split('\n').length : 0,
+      hasImmutable,
       content: text,
       wordSet: new Set(tokens),
     };
@@ -218,8 +223,14 @@ export function App() {
             </div>
           </div>
 
-          {/* Core Metrics Totals (Moved under similarity) */}
+          {/* Core Metrics Totals */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Immutable Rules</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a' }}>
+                {currentMetrics.hasImmutable ? 'Yes' : 'No'}
+              </div>
+            </div>
             <div style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Words</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentMetrics.words.toLocaleString()}</div>
