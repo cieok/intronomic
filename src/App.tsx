@@ -139,11 +139,25 @@ export function App() {
     return RULESETS.filter((r) => r.id !== currentRuleset.id).map((other) => {
       const otherMetrics = dataMap[other.id];
       if (!otherMetrics || otherMetrics.loading || otherMetrics.error) {
-        return { ruleset: other, score: null, error: otherMetrics?.error || 'Loading...' };
+        return { 
+          ruleset: other, 
+          score: null, 
+          otherHasImmutable: null,
+          immutableMatch: false,
+          error: otherMetrics?.error || 'Loading...' 
+        };
       }
 
       const score = calculateJaccardSimilarity(currentMetrics.wordSet, otherMetrics.wordSet);
-      return { ruleset: other, score, error: null };
+      const immutableMatch = currentMetrics.hasImmutable === otherMetrics.hasImmutable;
+
+      return { 
+        ruleset: other, 
+        score, 
+        otherHasImmutable: otherMetrics.hasImmutable,
+        immutableMatch,
+        error: null 
+      };
     });
   }, [currentRuleset, currentMetrics, dataMap]);
 
@@ -200,12 +214,23 @@ export function App() {
             <h3 style={{ marginTop: 0 }}>Similarity to Other Nomics</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {comparisons.map(({ ruleset, score, error }) => (
-                <div key={ruleset.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {comparisons.map(({ ruleset, score, otherHasImmutable, immutableMatch, error }) => (
+                <div key={ruleset.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
                     <span style={{ fontWeight: 'bold' }}>{ruleset.name}</span>
-                    <span>{score !== null ? `${score.toFixed(1)}% match` : error}</span>
+                    <span>{score !== null ? `${score.toFixed(1)}% word match` : error}</span>
                   </div>
+
+                  {otherHasImmutable !== null && (
+                    <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <span>Has Immutable Rules: <strong>{otherHasImmutable ? 'Yes' : 'No'}</strong></span>
+                      <span style={{ color: '#64748b' }}>•</span>
+                      <span>
+                        Immutable Match: <strong>{immutableMatch ? 'Yes (Same status)' : 'No (Differs)'}</strong>
+                      </span>
+                    </div>
+                  )}
+
                   {score !== null && (
                     <div style={{ height: '10px', background: '#e2e8f0', borderRadius: '5px', overflow: 'hidden' }}>
                       <div
