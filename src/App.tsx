@@ -11,7 +11,7 @@ interface RulesetConfig {
 const RULESETS: RulesetConfig[] = [
   {
     id: 'agora',
-    name: 'Agora Nomic (FLR)',
+    name: 'Agora Nomic',
     fetchUrl: 'https://agoranomic.org/ruleset/flr-fresh.txt',
     linkUrl: 'https://agoranomic.org/ruleset/flr-fresh.txt',
   },
@@ -21,12 +21,6 @@ const RULESETS: RulesetConfig[] = [
     fetchUrl: 'https://wiki.blognomic.com/api.php?action=parse&page=Ruleset&format=json&prop=wikitext&origin=*',
     linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
     isJsonApi: true,
-  },
-  {
-    id: 'curiosity',
-    name: 'Curiosity Nomic',
-    fetchUrl: 'https://raw.githubusercontent.com/cieok/curiosity/main/README.md',
-    linkUrl: 'https://github.com/cieok/curiosity/blob/main/README.md',
   },
   {
     id: 'infinite',
