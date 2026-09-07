@@ -48,6 +48,8 @@ export function App() {
     return initialMap;
   });
 
+  const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
+
   const fetchMetrics = async (ruleset: RulesetConfig): Promise<Omit<MetricData, 'loading' | 'error'>> => {
     const res = await fetch(ruleset.fetchUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -86,6 +88,9 @@ export function App() {
     });
   }, []);
 
+  const activeRuleset = RULESETS.find((r) => r.id === activePreviewId);
+  const activeContent = activePreviewId ? dataMap[activePreviewId]?.content : '';
+
   return (
     <div style={{ maxWidth: '1000px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
       <h1>Intronomic Ruleset Comparison</h1>
@@ -98,11 +103,12 @@ export function App() {
             <th style={{ padding: '0.75rem' }}>Total Words</th>
             <th style={{ padding: '0.75rem' }}>Total Characters</th>
             <th style={{ padding: '0.75rem' }}>Total Lines</th>
+            <th style={{ padding: '0.75rem', textAlign: 'center' }}>Preview</th>
           </tr>
         </thead>
         <tbody>
           {RULESETS.map((ruleset) => {
-            const metrics = dataMap[ruleset.id] || { loading: true, words: 0, characters: 0, lines: 0, error: null };
+            const metrics = dataMap[ruleset.id] || { loading: true, words: 0, characters: 0, lines: 0, content: '', error: null };
             return (
               <tr key={ruleset.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                 <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
@@ -121,22 +127,94 @@ export function App() {
                 <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.words.toLocaleString()}</td>
                 <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.characters.toLocaleString()}</td>
                 <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.lines.toLocaleString()}</td>
+                <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                  {!metrics.loading && !metrics.error && (
+                    <button
+                      onClick={() => setActivePreviewId(ruleset.id)}
+                      title={`View Preview for ${ruleset.name}`}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '1.25rem',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      📄
+                    </button>
+                  )}
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-        {RULESETS.map((ruleset) => (
-          <details key={ruleset.id} style={{ background: '#fafafa', border: '1px solid #ddd', padding: '1rem', borderRadius: '4px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>{ruleset.name} Preview</summary>
-            <pre style={{ marginTop: '1rem', maxHeight: '250px', overflowY: 'auto', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-              {dataMap[ruleset.id]?.content || 'Loading...'}
+      {/* Modal View for Ruleset Preview */}
+      {activePreviewId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setActivePreviewId(null)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '80vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>{activeRuleset?.name} - Preview</h3>
+              <button
+                onClick={() => setActivePreviewId(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <pre
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                background: '#f8fafc',
+                padding: '1rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '4px',
+                fontSize: '0.85rem',
+                whiteSpace: 'pre-wrap',
+                margin: 0,
+              }}
+            >
+              {activeContent}
             </pre>
-          </details>
-        ))}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
