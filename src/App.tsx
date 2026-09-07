@@ -28,6 +28,13 @@ const RULESETS: RulesetConfig[] = [
     fetchUrl: 'https://raw.githubusercontent.com/cieok/curiosity/main/README.md',
     linkUrl: 'https://github.com/cieok/curiosity/blob/main/README.md',
   },
+  {
+    id: 'infinite',
+    name: 'Infinite Nomic',
+    fetchUrl: 'https://infinite.nomic.space/wiki/api.php?action=parse&page=Metaruleset&format=json&prop=wikitext&origin=*',
+    linkUrl: 'https://infinite.nomic.space/wiki/index.php?title=Metaruleset',
+    isJsonApi: true,
+  },
 ];
 
 interface MetricData {
@@ -171,7 +178,7 @@ export function App() {
       <h1>Intronomic Ruleset Comparison</h1>
 
       {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #e2e8f0', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #e2e8f0', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         {RULESETS.map((ruleset) => {
           const isActive = ruleset.id === activeTabId;
           return (
