@@ -5,6 +5,7 @@ interface RulesetConfig {
   name: string;
   fetchUrl: string;
   linkUrl: string;
+  isJsonApi?: boolean;
 }
 
 const RULESETS: RulesetConfig[] = [
@@ -13,6 +14,13 @@ const RULESETS: RulesetConfig[] = [
     name: 'Agora Nomic (FLR)',
     fetchUrl: 'https://agoranomic.org/ruleset/flr-fresh.txt',
     linkUrl: 'https://agoranomic.org/ruleset/flr-fresh.txt',
+  },
+  {
+    id: 'blognomic',
+    name: 'BlogNomic Rules',
+    fetchUrl: 'https://wiki.blognomic.com/api.php?action=parse&page=Ruleset&format=json&prop=wikitext&origin=*',
+    linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
+    isJsonApi: true,
   },
   {
     id: 'curiosity',
@@ -32,15 +40,26 @@ interface MetricData {
 }
 
 export function App() {
-  const [dataMap, setDataMap] = useState<Record<string, MetricData>>({
-    agora: { words: 0, characters: 0, lines: 0, content: '', loading: true, error: null },
-    curiosity: { words: 0, characters: 0, lines: 0, content: '', loading: true, error: null },
+  const [dataMap, setDataMap] = useState<Record<string, MetricData>>(() => {
+    const initialMap: Record<string, MetricData> = {};
+    RULESETS.forEach((r) => {
+      initialMap[r.id] = { words: 0, characters: 0, lines: 0, content: '', loading: true, error: null };
+    });
+    return initialMap;
   });
 
-  const fetchMetrics = async (url: string): Promise<Omit<MetricData, 'loading' | 'error'>> => {
-    const res = await fetch(url);
+  const fetchMetrics = async (ruleset: RulesetConfig): Promise<Omit<MetricData, 'loading' | 'error'>> => {
+    const res = await fetch(ruleset.fetchUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
+
+    let text = '';
+    if (ruleset.isJsonApi) {
+      const json = await res.json();
+      text = json?.parse?.wikitext?.['*'] || '';
+    } else {
+      text = await res.text();
+    }
+
     return {
       words: text.trim() ? text.trim().split(/\s+/).length : 0,
       characters: text.length,
@@ -51,7 +70,7 @@ export function App() {
 
   useEffect(() => {
     RULESETS.forEach((ruleset) => {
-      fetchMetrics(ruleset.fetchUrl)
+      fetchMetrics(ruleset)
         .then((data) => {
           setDataMap((prev) => ({
             ...prev,
@@ -68,7 +87,7 @@ export function App() {
   }, []);
 
   return (
-    <div style={{ maxWidth: '900px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
+    <div style={{ maxWidth: '1000px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
       <h1>Intronomic Ruleset Comparison</h1>
 
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', textAlign: 'left' }}>
@@ -83,7 +102,7 @@ export function App() {
         </thead>
         <tbody>
           {RULESETS.map((ruleset) => {
-            const metrics = dataMap[ruleset.id];
+            const metrics = dataMap[ruleset.id] || { loading: true, words: 0, characters: 0, lines: 0, error: null };
             return (
               <tr key={ruleset.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                 <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
@@ -108,12 +127,12 @@ export function App() {
         </tbody>
       </table>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
         {RULESETS.map((ruleset) => (
           <details key={ruleset.id} style={{ background: '#fafafa', border: '1px solid #ddd', padding: '1rem', borderRadius: '4px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>{ruleset.name} Raw Content</summary>
-            <pre style={{ marginTop: '1rem', maxHeight: '300px', overflowY: 'auto', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-              {dataMap[ruleset.id].content}
+            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>{ruleset.name} Preview</summary>
+            <pre style={{ marginTop: '1rem', maxHeight: '250px', overflowY: 'auto', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
+              {dataMap[ruleset.id]?.content || 'Loading...'}
             </pre>
           </details>
         ))}
