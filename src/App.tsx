@@ -169,7 +169,7 @@ export function App() {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
-      <h1>Intronomic Ruleset Comparison</h1>
+      <h1>Nomic games comparison</h1>
 
       {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #e2e8f0', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
