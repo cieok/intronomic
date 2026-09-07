@@ -3,19 +3,22 @@ import { useState, useEffect } from 'react';
 interface RulesetConfig {
   id: string;
   name: string;
-  url: string;
+  fetchUrl: string;
+  linkUrl: string;
 }
 
 const RULESETS: RulesetConfig[] = [
   {
     id: 'agora',
     name: 'Agora Nomic (FLR)',
-    url: 'https://agoranomic.org/ruleset/flr-fresh.txt',
+    fetchUrl: 'https://agoranomic.org/ruleset/flr-fresh.txt',
+    linkUrl: 'https://agoranomic.org/ruleset/flr-fresh.txt',
   },
   {
     id: 'curiosity',
     name: 'Curiosity Nomic',
-    url: 'https://raw.githubusercontent.com/cieok/curiosity/main/README.md',
+    fetchUrl: 'https://raw.githubusercontent.com/cieok/curiosity/main/README.md',
+    linkUrl: 'https://github.com/cieok/curiosity/blob/main/README.md',
   },
 ];
 
@@ -48,7 +51,7 @@ export function App() {
 
   useEffect(() => {
     RULESETS.forEach((ruleset) => {
-      fetchMetrics(ruleset.url)
+      fetchMetrics(ruleset.fetchUrl)
         .then((data) => {
           setDataMap((prev) => ({
             ...prev,
@@ -83,7 +86,16 @@ export function App() {
             const metrics = dataMap[ruleset.id];
             return (
               <tr key={ruleset.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{ruleset.name}</td>
+                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
+                  <a
+                    href={ruleset.linkUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#2563eb', textDecoration: 'underline' }}
+                  >
+                    {ruleset.name}
+                  </a>
+                </td>
                 <td style={{ padding: '0.75rem' }}>
                   {metrics.loading ? 'Loading...' : metrics.error ? `Error: ${metrics.error}` : 'Loaded'}
                 </td>
