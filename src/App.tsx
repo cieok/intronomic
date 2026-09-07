@@ -1,11 +1,31 @@
 import { useState, useEffect } from 'react';
 
-const AGORA_URL = 'https://agoranomic.org/ruleset/flr-fresh.txt';
+interface RulesetConfig {
+  id: string;
+  name: string;
+  url: string;
+}
+
+const RULESETS: RulesetConfig[] = [
+  {
+    id: 'agora',
+    name: 'Agora Nomic (FLR)',
+    url: 'https://agoranomic.org/ruleset/flr-fresh.txt',
+  },
+  {
+    id: 'curiosity',
+    name: 'Curiosity Nomic',
+    url: 'https://raw.githubusercontent.com/cieok/curiosity/main/README.md',
+  },
+];
 
 export function App() {
+  const [activeId, setActiveId] = useState<string>('agora');
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const activeRuleset = RULESETS.find((r) => r.id === activeId) || RULESETS[0];
 
   useEffect(() => {
     async function fetchRuleset() {
@@ -13,7 +33,7 @@ export function App() {
       setError(null);
 
       try {
-        const res = await fetch(AGORA_URL);
+        const res = await fetch(activeRuleset.url);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
@@ -28,7 +48,7 @@ export function App() {
     }
 
     fetchRuleset();
-  }, []);
+  }, [activeId]);
 
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
   const lines = content ? content.split('\n').length : 0;
@@ -37,7 +57,23 @@ export function App() {
     <div style={{ maxWidth: '800px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
       <h1>Intronomic Ruleset Analyzer</h1>
 
-      {loading && <p>Loading ruleset from Agora Nomic...</p>}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        {RULESETS.map((ruleset) => (
+          <button
+            key={ruleset.id}
+            onClick={() => setActiveId(ruleset.id)}
+            style={{
+              padding: '0.5rem 1rem',
+              fontWeight: activeId === ruleset.id ? 'bold' : 'normal',
+              cursor: 'pointer',
+            }}
+          >
+            {ruleset.name}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p>Loading ruleset from {activeRuleset.name}...</p>}
 
       {error && (
         <div style={{ padding: '1rem', background: '#fee2e2', color: '#991b1b', borderRadius: '4px', marginBottom: '1rem' }}>
