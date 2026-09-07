@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface RulesetConfig {
   id: string;
@@ -24,7 +24,7 @@ const RULESETS: RulesetConfig[] = [
   },
   {
     id: 'curiosity',
-    name: 'Curiosity nomic',
+    name: 'Curiosity Nomic',
     fetchUrl: 'https://raw.githubusercontent.com/cieok/curiosity/main/README.md',
     linkUrl: 'https://github.com/cieok/curiosity/blob/main/README.md',
   },
@@ -35,20 +35,48 @@ interface MetricData {
   characters: number;
   lines: number;
   content: string;
+  wordSet: Set<string>;
   loading: boolean;
   error: string | null;
+}
+
+/**
+ * Calculates Jaccard Similarity between two sets of unique words.
+ * Returns a percentage value between 0 and 100.
+ */
+function calculateJaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
+  if (setA.size === 0 || setB.size === 0) return 0;
+  
+  let intersectionSize = 0;
+  setA.forEach((word) => {
+    if (setB.has(word)) {
+      intersectionSize++;
+    }
+  });
+
+  const unionSize = new Set([...setA, ...setB]).size;
+  return unionSize > 0 ? (intersectionSize / unionSize) * 100 : 0;
 }
 
 export function App() {
   const [dataMap, setDataMap] = useState<Record<string, MetricData>>(() => {
     const initialMap: Record<string, MetricData> = {};
     RULESETS.forEach((r) => {
-      initialMap[r.id] = { words: 0, characters: 0, lines: 0, content: '', loading: true, error: null };
+      initialMap[r.id] = {
+        words: 0,
+        characters: 0,
+        lines: 0,
+        content: '',
+        wordSet: new Set(),
+        loading: true,
+        error: null,
+      };
     });
     return initialMap;
   });
 
-  const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
+  const [activeTabId, setActiveTabId] = useState<string>(RULESETS[0].id);
+  const [showRawText, setShowRawText] = useState<boolean>(false);
 
   const fetchMetrics = async (ruleset: RulesetConfig): Promise<Omit<MetricData, 'loading' | 'error'>> => {
     const res = await fetch(ruleset.fetchUrl);
@@ -62,11 +90,19 @@ export function App() {
       text = await res.text();
     }
 
+    const tokens = text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
     return {
       words: text.trim() ? text.trim().split(/\s+/).length : 0,
       characters: text.length,
       lines: text ? text.split('\n').length : 0,
       content: text,
+      wordSet: new Set(tokens),
     };
   };
 
@@ -88,130 +124,149 @@ export function App() {
     });
   }, []);
 
-  const activeRuleset = RULESETS.find((r) => r.id === activePreviewId);
-  const activeContent = activePreviewId ? dataMap[activePreviewId]?.content : '';
+  const currentRuleset = RULESETS.find((r) => r.id === activeTabId) || RULESETS[0];
+  const currentMetrics = dataMap[currentRuleset.id];
+
+  // Compare selected Nomic against all other Nomics
+  const comparisons = useMemo(() => {
+    if (!currentMetrics || currentMetrics.loading || currentMetrics.error) return [];
+
+    return RULESETS.filter((r) => r.id !== currentRuleset.id).map((other) => {
+      const otherMetrics = dataMap[other.id];
+      if (!otherMetrics || otherMetrics.loading || otherMetrics.error) {
+        return { ruleset: other, score: null, error: otherMetrics?.error || 'Loading...' };
+      }
+
+      const score = calculateJaccardSimilarity(currentMetrics.wordSet, otherMetrics.wordSet);
+      return { ruleset: other, score, error: null };
+    });
+  }, [currentRuleset, currentMetrics, dataMap]);
 
   return (
     <div style={{ maxWidth: '1000px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
       <h1>Intronomic Ruleset Comparison</h1>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', textAlign: 'left' }}>
-        <thead>
-          <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
-            <th style={{ padding: '0.75rem' }}>Ruleset</th>
-            <th style={{ padding: '0.75rem' }}>Status</th>
-            <th style={{ padding: '0.75rem' }}>Total Words</th>
-            <th style={{ padding: '0.75rem' }}>Total Characters</th>
-            <th style={{ padding: '0.75rem' }}>Total Lines</th>
-            <th style={{ padding: '0.75rem', textAlign: 'center' }}>Preview</th>
-          </tr>
-        </thead>
-        <tbody>
-          {RULESETS.map((ruleset) => {
-            const metrics = dataMap[ruleset.id] || { loading: true, words: 0, characters: 0, lines: 0, content: '', error: null };
-            return (
-              <tr key={ruleset.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
-                  <a
-                    href={ruleset.linkUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: '#2563eb', textDecoration: 'underline' }}
-                  >
-                    {ruleset.name}
-                  </a>
-                </td>
-                <td style={{ padding: '0.75rem' }}>
-                  {metrics.loading ? 'Loading...' : metrics.error ? `Error: ${metrics.error}` : 'Loaded'}
-                </td>
-                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.words.toLocaleString()}</td>
-                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.characters.toLocaleString()}</td>
-                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.lines.toLocaleString()}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                  {!metrics.loading && !metrics.error && (
-                    <button
-                      onClick={() => setActivePreviewId(ruleset.id)}
-                      title={`View Preview for ${ruleset.name}`}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '1.25rem',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      📄
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      {/* Modal View for Ruleset Preview */}
-      {activePreviewId && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setActivePreviewId(null)}
-        >
-          <div
-            style={{
-              background: '#fff',
-              padding: '1.5rem',
-              borderRadius: '8px',
-              maxWidth: '800px',
-              width: '90%',
-              maxHeight: '80vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0 }}>{activeRuleset?.name} - Preview</h3>
-              <button
-                onClick={() => setActivePreviewId(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.2rem',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <pre
+      {/* Navigation Tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #e2e8f0', marginBottom: '1.5rem' }}>
+        {RULESETS.map((ruleset) => {
+          const isActive = ruleset.id === activeTabId;
+          return (
+            <button
+              key={ruleset.id}
+              onClick={() => {
+                setActiveTabId(ruleset.id);
+                setShowRawText(false);
+              }}
               style={{
-                flex: 1,
-                overflowY: 'auto',
-                background: '#f8fafc',
-                padding: '1rem',
-                border: '1px solid #e2e8f0',
-                borderRadius: '4px',
-                fontSize: '0.85rem',
-                whiteSpace: 'pre-wrap',
-                margin: 0,
+                padding: '0.75rem 1.25rem',
+                border: 'none',
+                borderBottom: isActive ? '3px solid #2563eb' : '3px solid transparent',
+                background: isActive ? '#eff6ff' : 'transparent',
+                fontWeight: isActive ? 'bold' : 'normal',
+                color: isActive ? '#1d4ed8' : '#64748b',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                borderRadius: '6px 6px 0 0',
               }}
             >
-              {activeContent}
-            </pre>
+              {ruleset.name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main View for Active Nomic */}
+      {currentMetrics.loading ? (
+        <p>Loading ruleset data...</p>
+      ) : currentMetrics.error ? (
+        <p style={{ color: '#dc2626' }}>Error loading {currentRuleset.name}: {currentMetrics.error}</p>
+      ) : (
+        <div>
+          {/* Header Info */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2>{currentRuleset.name}</h2>
+            <a href={currentRuleset.linkUrl} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>
+              View Source ↗
+            </a>
+          </div>
+
+          {/* Core Metrics */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Words</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentMetrics.words.toLocaleString()}</div>
+            </div>
+            <div style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Characters</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentMetrics.characters.toLocaleString()}</div>
+            </div>
+            <div style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Lines</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentMetrics.lines.toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* Similarity Analysis Section */}
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
+            <h3 style={{ marginTop: 0 }}>Similarity to Other Nomics</h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {comparisons.map(({ ruleset, score, error }) => (
+                <div key={ruleset.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
+                    <span style={{ fontWeight: 'bold' }}>{ruleset.name}</span>
+                    <span>{score !== null ? `${score.toFixed(1)}% match` : error}</span>
+                  </div>
+                  {score !== null && (
+                    <div style={{ height: '10px', background: '#e2e8f0', borderRadius: '5px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${Math.min(100, Math.max(0, score))}%`,
+                          background: '#2563eb',
+                          borderRadius: '5px',
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Rule Preview Toggle */}
+          <div>
+            <button
+              onClick={() => setShowRawText(!showRawText)}
+              style={{
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                padding: '0.5rem 1rem',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              📄 {showRawText ? 'Hide' : 'Show'} Rule Preview
+            </button>
+
+            {showRawText && (
+              <pre
+                style={{
+                  marginTop: '1rem',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  padding: '1rem',
+                  borderRadius: '6px',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  fontSize: '0.85rem',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {currentMetrics.content}
+              </pre>
+            )}
           </div>
         </div>
       )}
