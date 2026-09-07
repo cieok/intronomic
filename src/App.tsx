@@ -19,91 +19,93 @@ const RULESETS: RulesetConfig[] = [
   },
 ];
 
-export function App() {
-  const [activeId, setActiveId] = useState<string>('agora');
-  const [content, setContent] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+interface MetricData {
+  words: number;
+  characters: number;
+  lines: number;
+  content: string;
+  loading: boolean;
+  error: string | null;
+}
 
-  const activeRuleset = RULESETS.find((r) => r.id === activeId) || RULESETS[0];
+export function App() {
+  const [dataMap, setDataMap] = useState<Record<string, MetricData>>({
+    agora: { words: 0, characters: 0, lines: 0, content: '', loading: true, error: null },
+    curiosity: { words: 0, characters: 0, lines: 0, content: '', loading: true, error: null },
+  });
+
+  const fetchMetrics = async (url: string): Promise<Omit<MetricData, 'loading' | 'error'>> => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    return {
+      words: text.trim() ? text.trim().split(/\s+/).length : 0,
+      characters: text.length,
+      lines: text ? text.split('\n').length : 0,
+      content: text,
+    };
+  };
 
   useEffect(() => {
-    async function fetchRuleset() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch(activeRuleset.url);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        const text = await res.text();
-        setContent(text);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch ruleset';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRuleset();
-  }, [activeId]);
-
-  const words = content.trim() ? content.trim().split(/\s+/).length : 0;
-  const lines = content ? content.split('\n').length : 0;
+    RULESETS.forEach((ruleset) => {
+      fetchMetrics(ruleset.url)
+        .then((data) => {
+          setDataMap((prev) => ({
+            ...prev,
+            [ruleset.id]: { ...data, loading: false, error: null },
+          }));
+        })
+        .catch((err) => {
+          setDataMap((prev) => ({
+            ...prev,
+            [ruleset.id]: { ...prev[ruleset.id], loading: false, error: err.message },
+          }));
+        });
+    });
+  }, []);
 
   return (
-    <div style={{ maxWidth: '800px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
-      <h1>Intronomic Ruleset Analyzer</h1>
+    <div style={{ maxWidth: '900px', margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
+      <h1>Intronomic Ruleset Comparison</h1>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', textAlign: 'left' }}>
+        <thead>
+          <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+            <th style={{ padding: '0.75rem' }}>Ruleset</th>
+            <th style={{ padding: '0.75rem' }}>Status</th>
+            <th style={{ padding: '0.75rem' }}>Total Words</th>
+            <th style={{ padding: '0.75rem' }}>Total Characters</th>
+            <th style={{ padding: '0.75rem' }}>Total Lines</th>
+          </tr>
+        </thead>
+        <tbody>
+          {RULESETS.map((ruleset) => {
+            const metrics = dataMap[ruleset.id];
+            return (
+              <tr key={ruleset.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{ruleset.name}</td>
+                <td style={{ padding: '0.75rem' }}>
+                  {metrics.loading ? 'Loading...' : metrics.error ? `Error: ${metrics.error}` : 'Loaded'}
+                </td>
+                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.words.toLocaleString()}</td>
+                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.characters.toLocaleString()}</td>
+                <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{metrics.lines.toLocaleString()}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         {RULESETS.map((ruleset) => (
-          <button
-            key={ruleset.id}
-            onClick={() => setActiveId(ruleset.id)}
-            style={{
-              padding: '0.5rem 1rem',
-              fontWeight: activeId === ruleset.id ? 'bold' : 'normal',
-              cursor: 'pointer',
-            }}
-          >
-            {ruleset.name}
-          </button>
-        ))}
-      </div>
-
-      {loading && <p>Loading ruleset from {activeRuleset.name}...</p>}
-
-      {error && (
-        <div style={{ padding: '1rem', background: '#fee2e2', color: '#991b1b', borderRadius: '4px', marginBottom: '1rem' }}>
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-
-      {!loading && !error && (
-        <>
-          <div style={{ display: 'flex', gap: '2rem', background: '#f1f5f9', padding: '1rem', borderRadius: '6px', marginBottom: '1.5rem' }}>
-            <div>
-              <small style={{ color: '#64748b' }}>Total Words</small>
-              <h2 style={{ margin: 0 }}>{words.toLocaleString()}</h2>
-            </div>
-            <div>
-              <small style={{ color: '#64748b' }}>Total Lines</small>
-              <h2 style={{ margin: 0 }}>{lines.toLocaleString()}</h2>
-            </div>
-          </div>
-
-          <details style={{ background: '#fafafa', border: '1px solid #ddd', padding: '1rem', borderRadius: '4px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
-              Debug View: Raw Content Preview
-            </summary>
-            <pre style={{ marginTop: '1rem', maxHeight: '400px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.85rem', background: '#fff', padding: '0.5rem', border: '1px solid #eee' }}>
-              {content}
+          <details key={ruleset.id} style={{ background: '#fafafa', border: '1px solid #ddd', padding: '1rem', borderRadius: '4px' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>{ruleset.name} Raw Content</summary>
+            <pre style={{ marginTop: '1rem', maxHeight: '300px', overflowY: 'auto', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
+              {dataMap[ruleset.id].content}
             </pre>
           </details>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
