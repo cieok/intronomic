@@ -269,7 +269,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>Nomic ruleset comparison</h1>
+        <h1>IntroNomic</h1>
+        <p className="app-subtitle">All about nomic-like games, especially the stuff you cannot find elsewhere</p>
       </header>
 
       <div className="layout-body">
