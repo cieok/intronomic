@@ -19,7 +19,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        dice: resolve(__dirname, 'dice.html'), // Vite handles resolving src/pages/dice.tsx from dice.html
       },
     },
   },
