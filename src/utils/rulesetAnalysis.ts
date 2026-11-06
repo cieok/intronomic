@@ -36,6 +36,13 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     isJsonApi: true,
   },
   {
+    id: 'nomicron',
+    name: 'Nomicron',
+    fetchUrl: '/api/nomicron', // Fetches pre-parsed plain text from Cloudflare function
+    linkUrl: 'https://nomicron.org/rules/',
+    homeUrl: 'https://nomicron.org/',
+  },
+    {
     id: 'infinite',
     name: 'Infinite Nomic',
     fetchUrl: 'https://infinite.nomic.space/wiki/api.php?action=query&titles=Metaruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*',
@@ -43,13 +50,7 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     homeUrl: 'https://infinite.nomic.space/',
     isJsonApi: true,
   },
-  {
-    id: 'nomicron',
-    name: 'Nomicron',
-    fetchUrl: '/api/nomicron', // Fetches pre-parsed plain text from Cloudflare function
-    linkUrl: 'https://nomicron.org/rules/',
-    homeUrl: 'https://nomicron.org/',
-  },
+
 ];
 
 export const BANNED_AKA_WORDS = new Set([
