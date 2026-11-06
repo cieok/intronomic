@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import ReactDOM from 'react-dom/client';
 import styles from './Dice.module.css';
 
 // NIST Beacon 2.0 API Payload Type Definition
@@ -83,12 +82,10 @@ const parseDateTimeInTimezone = (dateTimeStr: string, timeZone: string): number 
   const [year, month, day] = datePart.split('-').map(Number);
   const [hours, minutes] = timePart.split(':').map(Number);
 
-  // Fallback to UTC simple parsing if UTC selected
   if (timeZone === 'UTC') {
     return Date.UTC(year, month - 1, day, hours, minutes);
   }
 
-  // Target local wall time assumption in UTC initially
   const targetUtcAttempt = Date.UTC(year, month - 1, day, hours, minutes);
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -107,7 +104,6 @@ const parseDateTimeInTimezone = (dateTimeStr: string, timeZone: string): number 
     if (p.type !== 'literal') partMap[p.type] = p.value;
   });
 
-  // Calculate local timezone offset difference relative to target wall-clock
   const formattedHour = partMap.hour === '24' ? 0 : parseInt(partMap.hour, 10);
   const formattedAsDate = Date.UTC(
     parseInt(partMap.year, 10),
@@ -146,7 +142,6 @@ const formatDateTimeInputForTimezone = (date: Date, timeZone: string): string =>
 };
 
 export default function Dice(): React.ReactElement {
-  // Detect local timezone once during initialization
   const [selectedTimezone, setSelectedTimezone] = useState<string>(detectUserTimezone);
 
   const [dateTimeInput, setDateTimeInput] = useState<string>(() =>
@@ -164,7 +159,6 @@ export default function Dice(): React.ReactElement {
   const [data, setData] = useState<CalculationDetails | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
 
-  // List of standard supported IANA Timezones
   const availableTimezones = useMemo(() => {
     try {
       return Intl.supportedValuesOf('timeZone');
@@ -229,12 +223,12 @@ export default function Dice(): React.ReactElement {
         }
 
         const expectedPulseUri = `https://beacon.nist.gov/beacon/2.0/pulse/time/${targetMs}`;
-        const searchParams = new URLSearchParams({
-          timestamp: targetMs.toString(),
-          min: minVal.toString(),
-          max: maxVal.toString(),
-          diceCount: count.toString(),
-        });
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.set('timestamp', targetMs.toString());
+        searchParams.set('min', minVal.toString());
+        searchParams.set('max', maxVal.toString());
+        searchParams.set('diceCount', count.toString());
+
         const currentShareableUrl = `${window.location.origin}${window.location.pathname}?${searchParams.toString()}`;
 
         const now = Date.now();
@@ -470,13 +464,6 @@ export default function Dice(): React.ReactElement {
 
   return (
     <div className={styles.container}>
-      {/* Top Navigation */}
-      <nav className={styles.topNav}>
-        <a href="/" className={styles.backLink}>
-          ← Back to Ruleset Comparison
-        </a>
-      </nav>
-
       <header className={styles.header}>
         <h1 className={styles.title}>NIST Beacon 2.0 Dice Roller</h1>
         <p className={styles.subtext}>
@@ -637,8 +624,6 @@ export default function Dice(): React.ReactElement {
             </div>
           </div>
 
-      
-
           <button
             onClick={() => executeRoll(scheduledRoll.targetTimestampMs, min, max, diceCount)}
             disabled={loading || isScheduledRollDisabled}
@@ -655,34 +640,31 @@ export default function Dice(): React.ReactElement {
             NIST generates pulses every 60 seconds (aligned to UTC minute boundaries) with a ~30 second delay for digital signing and distribution.
           </p>
           <div className={styles.subSectionSpacing}>
-  <strong>Target Pulse URI:</strong>{' '}
-  <div className={styles.noticeBox}>
-    ℹ️ <strong>Note:</strong> Accessing the NIST URI above prior to release will display{' '}
-    <code className={styles.inlineCode}>&quot;Pulse Not Available.&quot;</code> until the countdown expires.
-  </div>
-  <a
-    href={scheduledRoll.pulseUri}
-    target="_blank"
-    rel="noopener noreferrer"
-    className={styles.backLink}
-  >
-    <code className={styles.inlineCode}>{scheduledRoll.pulseUri}</code>
-  </a>
-</div>
-
+            <strong>Target Pulse URI:</strong>{' '}
+            <div className={styles.noticeBox}>
+              ℹ️ <strong>Note:</strong> Accessing the NIST URI above prior to release will display{' '}
+              <code className={styles.inlineCode}>&quot;Pulse Not Available.&quot;</code> until the countdown expires.
+            </div>
+            <a
+              href={scheduledRoll.pulseUri}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.backLink}
+            >
+              <code className={styles.inlineCode}>{scheduledRoll.pulseUri}</code>
+            </a>
+          </div>
         </div>
       )}
 
       {/* Results & Calculations */}
       {data && (
         <div className={styles.resultsContainer}>
-          {/* Prominent Result Header */}
           <div className={styles.resultBadge}>
             <span className={styles.badgeLabel}>
               {data.diceCount > 1 ? `Final Random Roll (${data.diceCount} Dice)` : 'Final Random Roll'}
             </span>
 
-            {/* Individual Dice Rectangles Grid with Blue Accented Values */}
             <div
               style={{
                 display: 'grid',
@@ -742,7 +724,6 @@ export default function Dice(): React.ReactElement {
               ))}
             </div>
 
-            {/* Math Aggregations (Sum & Product) */}
             {data.diceCount > 1 && (
               <div
                 style={{
@@ -771,7 +752,6 @@ export default function Dice(): React.ReactElement {
             </span>
           </div>
 
-          {/* Section 1: NIST Source Data */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>1. NIST Pulse Entropy Source</h3>
             <div className={styles.detailRow}>
@@ -794,7 +774,6 @@ export default function Dice(): React.ReactElement {
             </div>
           </div>
 
-          {/* Section 2: Step-by-Step Unbiased Calculation */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>2. Cryptographic Mapping & Verification</h3>
             <p className={styles.sectionExplainer}>
@@ -802,7 +781,6 @@ export default function Dice(): React.ReactElement {
               We slice minimal hex chunks from the 512-bit output and reject values falling into uneven remainder zones.
             </p>
 
-            {/* Step A */}
             <div className={styles.stepBox}>
               <div className={styles.stepHeader}>
                 <span className={styles.stepBadge}>Step A</span>
@@ -818,7 +796,6 @@ export default function Dice(): React.ReactElement {
               </div>
             </div>
 
-            {/* Step B */}
             <div className={styles.stepBox}>
               <div className={styles.stepHeader}>
                 <span className={styles.stepBadge}>Step B</span>
@@ -834,7 +811,6 @@ export default function Dice(): React.ReactElement {
               </div>
             </div>
 
-            {/* Step C & D Per Die */}
             {data.diceResults.map((die) => (
               <div key={die.dieIndex} className={styles.stepBox}>
                 <div className={styles.stepHeader}>
@@ -851,7 +827,7 @@ export default function Dice(): React.ReactElement {
                       }`}
                     >
                       <div>
-                        <strong>Attempt #{attempt.attemptIndex}:</strong> Chunk <code className={styles.inlineCode}>"0x{attempt.hexSlice}"</code> → Decimal (X) = <strong>{attempt.decimalValue}</strong>
+                        <strong>Attempt #{attempt.attemptIndex}:</strong> Chunk <code className={styles.inlineCode}>&quot;0x{attempt.hexSlice}&quot;</code> → Decimal (X) = <strong>{attempt.decimalValue}</strong>
                       </div>
                       <div className={styles.statusCheck}>
                         Validation: {attempt.decimalValue} {attempt.accepted ? '<' : '≮'} {data.limit}{' '}
@@ -874,19 +850,6 @@ export default function Dice(): React.ReactElement {
           </div>
         </div>
       )}
-
-      {/* Footer link */}
-      <div className={styles.footer}>
-        <a href="/" className={styles.backLink}>
-          ← Back to Main App
-        </a>
-      </div>
     </div>
   );
 }
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Dice />
-  </React.StrictMode>
-);
