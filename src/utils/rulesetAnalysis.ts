@@ -5,6 +5,7 @@ export interface RulesetConfig {
   linkUrl: string;
   homeUrl: string;
   isJsonApi?: boolean;
+  isHtml?: boolean;
 }
 
 export interface MetricData {
@@ -42,6 +43,14 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     linkUrl: 'https://infinite.nomic.space/wiki/index.php?title=Metaruleset',
     homeUrl: 'https://infinite.nomic.space/',
     isJsonApi: true,
+  },
+  {
+    id: 'nomicron',
+    name: 'Nomicron',
+    fetchUrl: '/api/nomicron', // Proxied via Cloudflare function to bypass CORS
+    linkUrl: 'https://nomicron.org/rules/',
+    homeUrl: 'https://nomicron.org/',
+    isHtml: true, // Strips HTML tags so word metrics remain clean
   },
 ];
 
@@ -169,7 +178,17 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
       rawDateString = revision?.timestamp || null;
     }
   } else {
-    text = await res.text();
+    const rawText = await res.text();
+
+    if (ruleset.isHtml) {
+      // Parse HTML to extract clean visible text content and discard markup tags
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawText, 'text/html');
+      text = doc.body.textContent || '';
+    } else {
+      text = rawText;
+    }
+
     rawDateString = res.headers.get('last-modified');
   }
 
