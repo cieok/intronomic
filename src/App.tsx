@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import './App.css';
 import {
-  INITIAL_RULESETS,
   HELP_TEXTS,
   calculateJaccardSimilarity,
   formatSizeComparison,
@@ -294,7 +293,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
       <header className="app-header">
         <div className="header-title-area">
           <h1>IntroNomic</h1>
-          <p className="app-subtitle">All about nomic-like games, ruleset analyses, and comparisons</p>
+          <p className="app-subtitle">All about nomic-like games, especially the stuff you cannot find elsewheregg</p>
         </div>
         
         <nav className="site-nav-tabs">
