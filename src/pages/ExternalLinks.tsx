@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function ExternalLinks() {
   return (
     <div className="card external-resources-card">
