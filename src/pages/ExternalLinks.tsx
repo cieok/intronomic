@@ -3,7 +3,7 @@ export function ExternalLinks() {
     <div className="card external-resources-card">
       <h2>External Resources & Community Links</h2>
       <p className="resources-intro">
-        Explore nomic leaderboards, guides, Wikipedia documentation, and infrastructure backing IntroNomic.
+        Explore nomic leaderboards, guides, reddit communities, Wikipedia documentation, and infrastructure backing IntroNomic.
       </p>
 
       <div className="resources-grid">
@@ -20,6 +20,14 @@ export function ExternalLinks() {
           <p>New to the concept of self-modifying rule-based games? Read this small guide from an experienced player.</p>
           <a href="https://kiako.me/nomic/" target="_blank" rel="noreferrer" className="resource-link">
             Read Introduction Guide ↗
+          </a>
+        </div>
+
+        <div className="resource-item">
+          <h3>💬 r/nomic Subreddit</h3>
+          <p>Join discussions, start new games, and interact with the Nomic player community on Reddit.</p>
+          <a href="https://www.reddit.com/r/nomic/" target="_blank" rel="noreferrer" className="resource-link">
+            Visit r/nomic on Reddit ↗
           </a>
         </div>
 
