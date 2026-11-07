@@ -9,6 +9,7 @@ import {
 import { getDateColor, formatRelativeAge } from './utils/dateUtils';
 import { useRulesetData } from './useRulesetData';
 import Dice from './pages/Dice';
+import ExternalLinks from './pages/ExternalLinks';
 
 // Helper to determine active section based on the current URL path
 const getSectionFromPath = (path: string): 'rulesets' | 'dice' | 'links' => {
@@ -647,40 +648,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
       {currentSection === 'dice' && <Dice />}
 
       {/* SECTION 3: EXTERNAL RESOURCES VIEW */}
-      {currentSection === 'links' && (
-        <div className="card external-resources-card">
-          <h2>External Resources & Community Links</h2>
-          <p className="resources-intro">
-            Explore nomic leaderboards, guides and infrastructure backing IntroNomic.
-          </p>
-
-          <div className="resources-grid">
-            <div className="resource-item">
-              <h3>🏆 Nomic Leaderboards (Fandom)</h3>
-              <p>Browse active community rankings on Fandom wiki.</p>
-              <a href="https://nomic.fandom.com/wiki/Leaderboards" target="_blank" rel="noreferrer" className="resource-link">
-                Visit Fandom Leaderboards ↗
-              </a>
-            </div>
-
-            <div className="resource-item">
-              <h3>📖 Introduction to Nomic</h3>
-              <p>New to the concept of self-modifying rule-based games? Read this small guide from an experienced player.</p>
-              <a href="https://kiako.me/nomic/" target="_blank" rel="noreferrer" className="resource-link">
-                Read Introduction Guide ↗
-              </a>
-            </div>
-
-            <div className="resource-item">
-              <h3>💻 GitHub Code Repository</h3>
-              <p>Check out the source code, inspect analysis utility functions, contribute ruleset definitions, or file issues on the official GitHub repository for this project.</p>
-              <a href="https://github.com/cieok/nomicinfra" target="_blank" rel="noreferrer" className="resource-link">
-                View Repository on GitHub ↗
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      {currentSection === 'links' && <ExternalLinks />}
     </div>
   );
 }
