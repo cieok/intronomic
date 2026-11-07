@@ -358,9 +358,32 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
             ) : !currentMetrics || currentMetrics.loading ? (
               <p>Loading ruleset data...</p>
             ) : currentMetrics.error ? (
-              <p className="error-text">
-                Error loading {currentRuleset.name}: {currentMetrics.error}
-              </p>
+              <div className="card error-card" style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}>
+                <h3 style={{ color: '#d90429', marginBottom: '0.75rem' }}>Error Loading {currentRuleset.name}</h3>
+                <p className="error-text" style={{ marginBottom: '1.25rem', color: 'var(--text-secondary, #666)' }}>
+                  {currentMetrics.error}
+                </p>
+                <p style={{ marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                  We are experiencing performance constraints here. For a much faster and smoother experience, please visit our alternative frontend:
+                </p>
+                <a
+                  href="https://www.intronomic.workers.dev/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="external-link"
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 20px',
+                    backgroundColor: '#0077b6',
+                    color: '#fff',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                  }}
+                >
+                  Visit Better Performance Frontend ↗
+                </a>
+              </div>
             ) : (
               <div>
                 <div className="header-container">
