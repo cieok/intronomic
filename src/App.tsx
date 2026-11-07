@@ -364,10 +364,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   {currentMetrics.error}
                 </p>
                 <p style={{ marginBottom: '1rem', lineHeight: '1.5' }}>
-                  Sorry for the error. Please visit our new frontend, we have fixed more errors there:
-                </p>
-                <p style={{ marginBottom: '0' }}>
-                  <a
+                  Sorry for the error. Please visit the new frontend on <a
                     href="https://www.intronomic.workers.dev/"
                     target="_blank"
                     rel="noreferrer"
@@ -379,7 +376,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                     }}
                   >
                     https://www.intronomic.workers.dev/ ↗
-                  </a>
+                  </a>. I have fixed more errors there.
                 </p>
               </div>
             ) : (
