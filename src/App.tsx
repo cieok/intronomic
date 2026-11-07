@@ -363,26 +363,24 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                 <p className="error-text" style={{ marginBottom: '1.25rem', color: 'var(--text-secondary, #666)' }}>
                   {currentMetrics.error}
                 </p>
-                <p style={{ marginBottom: '1.5rem', lineHeight: '1.5' }}>
-                  We are experiencing performance constraints here. For a much faster and smoother experience, please visit our alternative frontend:
+                <p style={{ marginBottom: '1rem', lineHeight: '1.5' }}>
+                  Sorry for the error. Please visit our new frontend, we have fixed more errors there:
                 </p>
-                <a
-                  href="https://www.intronomic.workers.dev/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="external-link"
-                  style={{
-                    display: 'inline-block',
-                    padding: '10px 20px',
-                    backgroundColor: '#0077b6',
-                    color: '#fff',
-                    borderRadius: '6px',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                  }}
-                >
-                  Visit Better Performance Frontend ↗
-                </a>
+                <p style={{ marginBottom: '0' }}>
+                  <a
+                    href="https://www.intronomic.workers.dev/"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: '#0077b6',
+                      textDecoration: 'underline',
+                      fontWeight: 600,
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    https://www.intronomic.workers.dev/ ↗
+                  </a>
+                </p>
               </div>
             ) : (
               <div>
