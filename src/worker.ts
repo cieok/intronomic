@@ -1,3 +1,5 @@
+import '@cloudflare/workers-types';
+
 export interface Env {
   TEST: KVNamespace;
   ASSETS: {
