@@ -17,7 +17,7 @@
       "invocation_logs": true
     }},
   "triggers": {
-    "crons": ["0 0 * * 5"]
+    "crons": ["0 0 * * 1,5"]
   },
   "kv_namespaces": [
     {

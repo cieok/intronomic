@@ -8,7 +8,7 @@ export interface Env {
 }
 
 export default {
-  // 1. Cron Trigger Handler (Runs on your scheduled Friday cron config)
+  // 1. Cron Trigger Handler
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(handleCron(env));
   },
@@ -20,7 +20,7 @@ export default {
     // --- Handle Agora Players API route (Reads directly from KV) ---
     if (url.pathname.startsWith('/api/agora-players')) {
       try {
-        const playerCountStr = await env.KV.get('agora_player_count');
+        const playerCountStr = await env.KV.get('agora_players');
         
         if (playerCountStr !== null) {
           const playerCount = parseInt(playerCountStr, 10);
@@ -39,28 +39,13 @@ export default {
       }
     }
 
-    // 1. Handle Nomicron Players API route
+    // --- Handle Nomicron Players API route (Reads directly from KV) ---
     if (url.pathname.startsWith('/api/nomicron-players')) {
       try {
-        const externalResponse = await fetch('https://nomicron.org/players', {
-          headers: { 'User-Agent': 'Nomicinfra-App' },
-        });
+        const playerCountStr = await env.KV.get('nomicron_players');
 
-        if (!externalResponse.ok) {
-          return new Response(JSON.stringify({ error: `Upstream HTTP ${externalResponse.status}` }), {
-            status: externalResponse.status,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-
-        const htmlText = await externalResponse.text();
-        const cleanText = htmlText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-
-        // Matches phrase like "Active Players (10)" case-insensitively
-        const match = cleanText.match(/active\s+players\s*\((\d+)\)/i);
-
-        if (match && match[1]) {
-          const playerCount = parseInt(match[1], 10);
+        if (playerCountStr !== null) {
+          const playerCount = parseInt(playerCountStr, 10);
           return Response.json({ players: playerCount }, {
             status: 200,
             headers: {
@@ -69,10 +54,10 @@ export default {
           });
         }
 
-        return Response.json({ error: 'Player count not found on Nomicron players page' }, { status: 404 });
+        return Response.json({ error: 'Nomicron player count not found in KV' }, { status: 404 });
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        return Response.json({ error: 'Failed to fetch or parse Nomicron players', details: errorMessage }, { status: 500 });
+        return Response.json({ error: 'Failed to read Nomicron players from KV', details: errorMessage }, { status: 500 });
       }
     }
 
@@ -172,64 +157,94 @@ export default {
   },
 };
 
-// --- Cron Handler: Runs on Fridays to parse RSS feed and update KV storage ---
+// --- Cron Handler: Forks based on day of week (UTC) ---
 async function handleCron(env: Env) {
+  const dayOfWeek = new Date().getUTCDay(); 
+  // 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
+
   try {
-    // 1. Fetch the Agora official mailing list RSS feed
-    const feedRes = await fetch('https://www.mail-archive.com/agora-official@agoranomic.org/maillist.xml', {
-      headers: { 'User-Agent': 'Nomicinfra-App' },
-    });
-
-    if (!feedRes.ok) {
-      console.error(`Failed to fetch RSS feed: Upstream HTTP ${feedRes.status}`);
-      return;
+    // Example: Run Agora update on Fridays (Day 5)
+    if (dayOfWeek === 5) {
+      console.log('Executing Friday task: Agora Players Update');
+      await updateAgoraPlayers(env);
+    } 
+    // Example: Run Nomicron update on Mondays (Day 1)
+    else if (dayOfWeek === 1) {
+      console.log('Executing Monday task: Nomicron Players Update');
+      await updateNomicronPlayers(env);
+    } 
+    else {
+      console.log(`Cron triggered on day ${dayOfWeek}, but no task is scheduled for today.`);
     }
-
-    const xmlText = await feedRes.text();
-
-    // 2. Find the first occurrence of "[Registrar] Weekly report" in the item titles
-    // We can use regex to locate matching item blocks or search the title strings
-    const itemRegex = /<item>[\s\S]*?<title>([^<]*\[Registrar\]\s+Weekly\s+report[^<]*)<\/title>[\s\S]*?<link>([^<]+)<\/link>[\s\S]*?<\/item>/i;
-    const match = xmlText.match(itemRegex);
-
-    if (!match || !match[2]) {
-      console.log('No [Registrar] Weekly report item found in feed.');
-      return;
-    }
-
-    const reportUrl = match[2].trim();
-    console.log(`Found Weekly Report URL: ${reportUrl}`);
-
-    // 3. Fetch the specific email archive page
-    const emailRes = await fetch(reportUrl, {
-      headers: { 'User-Agent': 'Nomicinfra-App' },
-    });
-
-    if (!emailRes.ok) {
-      console.error(`Failed to fetch email report page: HTTP ${emailRes.status}`);
-      return;
-    }
-
-    const emailHtml = await emailRes.text();
-    const cleanEmailText = emailHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-
-    // 4. Look for phrase like "Active players: 19/23" or similar and extract the first number
-    // Matches patterns like "Active players: 19" or "Active players 19/23"
-    const playerMatch = cleanEmailText.match(/active\s+players[:\s]*(\d+)(?:\/\d+)?/i);
-
-    if (playerMatch && playerMatch[1]) {
-      const playerCount = parseInt(playerMatch[1], 10);
-      
-      // 5. Save the parsed player count into KV
-      await env.KV.put('agora_player_count', playerCount.toString());
-      console.log(`Successfully updated Agora player count to KV: ${playerCount}`);
-    } else {
-      console.log('Could not find active players count pattern in the weekly report email text.');
-    }
-
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error("Failed to execute Friday cron tasks:", errorMessage);
+    console.error("Failed to execute scheduled cron task:", errorMessage);
     throw err;
+  }
+}
+
+// --- Task Helper: Update Agora Players ---
+async function updateAgoraPlayers(env: Env) {
+  const feedRes = await fetch('https://www.mail-archive.com/agora-official@agoranomic.org/maillist.xml', {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!feedRes.ok) {
+    throw new Error(`Failed to fetch Agora RSS feed: Upstream HTTP ${feedRes.status}`);
+  }
+
+  const xmlText = await feedRes.text();
+  const itemRegex = /<item>[\s\S]*?<title>([^<]*\[Registrar\]\s+Weekly\s+report[^<]*)<\/title>[\s\S]*?<link>([^<]+)<\/link>[\s\S]*?<\/item>/i;
+  const match = xmlText.match(itemRegex);
+
+  if (!match || !match[2]) {
+    console.log('No [Registrar] Weekly report item found in feed.');
+    return;
+  }
+
+  const reportUrl = match[2].trim();
+  console.log(`Found Weekly Report URL: ${reportUrl}`);
+
+  const emailRes = await fetch(reportUrl, {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!emailRes.ok) {
+    throw new Error(`Failed to fetch email report page: HTTP ${emailRes.status}`);
+  }
+
+  const emailHtml = await emailRes.text();
+  const cleanEmailText = emailHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  const playerMatch = cleanEmailText.match(/active\s+players[:\s]*(\d+)(?:\/\d+)?/i);
+
+  if (playerMatch && playerMatch[1]) {
+    const playerCount = parseInt(playerMatch[1], 10);
+    await env.KV.put('agora_players', playerCount.toString());
+    console.log(`Successfully updated Agora player count to KV: ${playerCount}`);
+  } else {
+    console.log('Could not find active players count pattern in the weekly report email text.');
+  }
+}
+
+// --- Task Helper: Update Nomicron Players ---
+async function updateNomicronPlayers(env: Env) {
+  const externalResponse = await fetch('https://nomic.org/players', {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!externalResponse.ok) {
+    throw new Error(`Failed to fetch Nomicron players page: Upstream HTTP ${externalResponse.status}`);
+  }
+
+  const htmlText = await externalResponse.text();
+  const cleanText = htmlText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  const match = cleanText.match(/active\s+players\s*\((\d+)\)/i);
+
+  if (match && match[1]) {
+    const playerCount = parseInt(match[1], 10);
+    await env.KV.put('nomicron_players', playerCount.toString());
+    console.log(`Successfully updated Nomicron player count to KV: ${playerCount}`);
+  } else {
+    console.log('Player count not found on Nomicron players page.');
   }
 }
