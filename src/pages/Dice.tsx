@@ -642,7 +642,7 @@ export default function Dice(): React.ReactElement {
           <div className={styles.subSectionSpacing}>
             <strong>Target Pulse URI:</strong>{' '}
             <div className={styles.noticeBox}>
-              ℹ️ <strong>Note:</strong> Accessing the NIST URI above prior to release will display{' '}
+              ℹ️ <strong>Note:</strong> Accessing the NIST URI below prior to release will display{' '}
               <code className={styles.inlineCode}>&quot;Pulse Not Available.&quot;</code> until the countdown expires.
             </div>
             <a
