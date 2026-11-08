@@ -346,10 +346,10 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                           onClick={() => handleSelectRuleset(ruleset.id)}
                           className={`nav-item ${isActive ? 'active' : ''}`}
                         >
-                          <div className="nav-item-content">
+                          <div className="nav-item-content" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                             <span className="nav-item-name">{gamePrefix}{ruleset.name}</span>
                             {!isTemplate && (
-                              <div className="nav-item-meta">
+                              <div className="nav-item-meta" style={{ alignSelf: 'flex-end', textAlign: 'right' }}>
                                 <span title={players === '??' ? 'Active players unknown' : `${players} Active Players`}>
                                   👥 {players}                                </span>
                               </div>
