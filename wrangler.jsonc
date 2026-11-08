@@ -11,11 +11,11 @@
     ]
   },
   "triggers": {
-    "crons": ["0 0 * * *"]
+    "crons": ["*/7 * * * *"]
   },
   "kv_namespaces": [
     {
-      "binding": "KV",
+      "binding": "TEST",
       "id": "c0e4c264a77b494cae6a3eb2260eb2c0"
     }
   ]

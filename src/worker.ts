@@ -8,8 +8,8 @@ export interface Env {
 }
 
 export default {
-  // 1. Cron Trigger Handler (Runs automatically based on your cron config)
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  // 1. Cron Trigger Handler (Runs on your scheduled Friday cron config)
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(handleCron(env));
   },
 
@@ -172,15 +172,64 @@ export default {
   },
 };
 
-// --- Cron Handler: Writes execution timestamp to KV ---
+// --- Cron Handler: Runs on Fridays to parse RSS feed and update KV storage ---
 async function handleCron(env: Env) {
   try {
-    const timestamp = new Date().toISOString();
-    await env.KV.put("last_cron_timestamp", timestamp);
-    console.log(`Cron successfully ran and wrote timestamp: ${timestamp}`);
+    // 1. Fetch the Agora official mailing list RSS feed
+    const feedRes = await fetch('https://www.mail-archive.com/agora-official@agoranomic.org/maillist.xml', {
+      headers: { 'User-Agent': 'Nomicinfra-App' },
+    });
+
+    if (!feedRes.ok) {
+      console.error(`Failed to fetch RSS feed: Upstream HTTP ${feedRes.status}`);
+      return;
+    }
+
+    const xmlText = await feedRes.text();
+
+    // 2. Find the first occurrence of "[Registrar] Weekly report" in the item titles
+    // We can use regex to locate matching item blocks or search the title strings
+    const itemRegex = /<item>[\s\S]*?<title>([^<]*\[Registrar\]\s+Weekly\s+report[^<]*)<\/title>[\s\S]*?<link>([^<]+)<\/link>[\s\S]*?<\/item>/i;
+    const match = xmlText.match(itemRegex);
+
+    if (!match || !match[2]) {
+      console.log('No [Registrar] Weekly report item found in feed.');
+      return;
+    }
+
+    const reportUrl = match[2].trim();
+    console.log(`Found Weekly Report URL: ${reportUrl}`);
+
+    // 3. Fetch the specific email archive page
+    const emailRes = await fetch(reportUrl, {
+      headers: { 'User-Agent': 'Nomicinfra-App' },
+    });
+
+    if (!emailRes.ok) {
+      console.error(`Failed to fetch email report page: HTTP ${emailRes.status}`);
+      return;
+    }
+
+    const emailHtml = await emailRes.text();
+    const cleanEmailText = emailHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+
+    // 4. Look for phrase like "Active players: 19/23" or similar and extract the first number
+    // Matches patterns like "Active players: 19" or "Active players 19/23"
+    const playerMatch = cleanEmailText.match(/active\s+players[:\s]*(\d+)(?:\/\d+)?/i);
+
+    if (playerMatch && playerMatch[1]) {
+      const playerCount = parseInt(playerMatch[1], 10);
+      
+      // 5. Save the parsed player count into KV
+      await env.KV.put('agora_player_count', (playerCount + 4).toString());
+      console.log(`Successfully updated Agora player count to KV: ${playerCount}`);
+    } else {
+      console.log('Could not find active players count pattern in the weekly report email text.');
+    }
+
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error("Failed to write cron timestamp to KV:", errorMessage);
+    console.error("Failed to execute Friday cron tasks:", errorMessage);
     throw err;
   }
 }
