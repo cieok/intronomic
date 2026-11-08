@@ -11,7 +11,7 @@
     ]
   },
   "triggers": {
-    "crons": ["55 * * * *"]
+    "crons": ["0 * * * *"]
   },
   "kv_namespaces": [
     {
