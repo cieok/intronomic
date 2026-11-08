@@ -93,6 +93,20 @@
 }
 
 /* Header & Links */
+.app-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* Centered horizontally */
+  justify-content: center;
+  text-align: center;     /* Centered text */
+  width: 100%;
+  margin: 0 auto;
+}
+
+.header-title-area {
+  text-align: center;
+}
+
 .header-container {
   display: flex;
   justify-content: space-between;
@@ -628,12 +642,16 @@
 }
 
 
-/* --- Added for Top Nav Tabs & Integrated Views --- */
+/* --- Updated for Centered Top Nav Tabs & Integrated Views --- */
 
 .site-nav-tabs {
   display: flex;
+  justify-content: center; /* Horizontally centers the nav buttons */
+  align-items: center;
   gap: 0.5rem;
-  margin-top: 1rem;
+  width: 100%;
+  max-width: fit-content;
+  margin: 1rem auto 0;      /* Auto horizontal margins guarantee centering */
 }
 
 .nav-tab-btn {
