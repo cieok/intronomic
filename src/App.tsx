@@ -331,13 +331,29 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   <div className="nav-list">
                     {items.map((ruleset) => {
                       const isActive = ruleset.id === activeTabId;
+                      const isTemplate = ruleset.category === 'Templates';
+                      const metrics = dataMap[ruleset.id];
+                      
+                      const players = !isTemplate && metrics && !metrics.loading && !metrics.error && metrics.players !== null && metrics.players !== undefined
+                        ? metrics.players
+                        : (!isTemplate ? '??' : null);
+
                       return (
                         <button
                           key={ruleset.id}
                           onClick={() => handleSelectRuleset(ruleset.id)}
                           className={`nav-item ${isActive ? 'active' : ''}`}
                         >
-                          {ruleset.name}
+                          <div className="nav-item-content">
+                            <span className="nav-item-name">{ruleset.name}</span>
+                            {!isTemplate && (
+                              <div className="nav-item-meta">
+                                <span title={players === '??' ? 'Active players unknown' : `${players} Active Players`}>
+                                  👥 {players} Players
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </button>
                       );
                     })}
