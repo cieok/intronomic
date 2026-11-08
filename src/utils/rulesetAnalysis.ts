@@ -40,7 +40,8 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
       try {
         const res = await fetch('/api/blognomic');
         if (!res.ok) return null;
-        const data = await res.json();
+        // Fixed: Cast json data as any/record to avoid 'is of type unknown' error
+        const data = (await res.json()) as { players?: number };
         return data.players ?? null;
       } catch {
         return null;
@@ -57,7 +58,8 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
       try {
         const res = await fetch('/api/nomicron-players');
         if (!res.ok) return null;
-        const data = await res.json();
+        // Fixed: Cast json data as any/record to avoid 'is of type unknown' error
+        const data = (await res.json()) as { players?: number };
         return data.players ?? null;
       } catch {
         return null;
@@ -186,7 +188,20 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
   let rawDateString: string | null = null;
 
   if (ruleset.isJsonApi) {
-    const json = await res.json();
+    // Fixed: Cast json data explicitly to avoid 'is of type unknown' errors
+    const json = (await res.json()) as {
+      query?: {
+        pages?: Record<string, {
+          revisions?: Array<{
+            slots?: { main?: { '*'?: string } };
+            '*'?: string;
+            timestamp?: string;
+          }>;
+        }>;
+      };
+    };
+    
+    // Fixed line ~190: ensure query property access is safely typed
     const pages = json?.query?.pages;
     if (pages) {
       const pageKey = Object.keys(pages)[0];

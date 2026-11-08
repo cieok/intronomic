@@ -13,15 +13,17 @@ export function useBlognomicData() {
         }
         return res.json();
       })
-      .then((data) => {
-        if (data.players !== undefined) {
-          setPlayers(data.players);
+      .then((data: unknown) => {
+        const result = data as { players?: number; error?: string };
+        if (result.players !== undefined) {
+          setPlayers(result.players);
         } else {
-          setError(data.error || 'Invalid data format');
+          setError(result.error || 'Invalid data format');
         }
       })
-      .catch((err) => {
-        setError(err.message);
+      .catch((err: unknown) => {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(errorMessage);
       })
       .finally(() => {
         setLoading(false);
