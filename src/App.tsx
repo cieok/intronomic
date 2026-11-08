@@ -349,7 +349,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                             {!isTemplate && (
                               <div className="nav-item-meta">
                                 <span title={players === '??' ? 'Active players unknown' : `${players} Active Players`}>
-                                  👥 {players} Players
+                                  👥 {players}
                                 </span>
                               </div>
                             )}
