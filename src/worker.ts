@@ -1,5 +1,18 @@
+export interface Env {
+  TEST: KVNamespace;
+  ASSETS: {
+    fetch: (request: Request) => Promise<Response>;
+  };
+}
+
 export default {
-  async fetch(request: Request, env: any): Promise<Response> {
+  // 1. Cron Trigger Handler (Runs automatically every hour based on your cron config)
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(handleCron(env));
+  },
+
+  // 2. Preexisting fetch handler (Unchanged)
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // 1. Handle Nomicron API route
@@ -147,3 +160,14 @@ export default {
     return env.ASSETS.fetch(new Request(new URL('/index.html', request.url), request));
   },
 };
+
+// --- Minimal Cron Handler: Writes execution timestamp to KV ---
+async function handleCron(env: Env) {
+  try {
+    const timestamp = new Date().toISOString();
+    await env.TEST.put("last_cron_timestamp", timestamp);
+    console.log(`Cron successfully ran and wrote timestamp: ${timestamp}`);
+  } catch (err: any) {
+    console.error("Failed to write cron timestamp to KV:", err.message);
+  }
+}

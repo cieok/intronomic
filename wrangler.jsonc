@@ -9,5 +9,14 @@
     "run_worker_first": [
       "/api/*"
     ]
-  }
+  },
+  "triggers": {
+    "crons": ["47 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "TEST",
+      "id": "c0e4c264a77b494cae6a3eb2260eb2c0"
+    }
+  ]
 }
