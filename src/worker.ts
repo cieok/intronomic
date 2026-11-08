@@ -7,12 +7,12 @@ export interface Env {
 
 export default {
   // 1. Cron Trigger Handler (Runs automatically every hour based on your cron config)
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(handleCron(env));
   },
 
   // 2. Preexisting fetch handler (Unchanged)
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // 1. Handle Nomicron API route
