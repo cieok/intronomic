@@ -57,8 +57,8 @@ interface ScheduledRoll {
   shareableUrl: string;
 }
 
-// NIST pulse generation, signing & CDN propagation delay buffer in ms (30 seconds)
-const NIST_DELAY_OFFSET_MS = 30 * 1000;
+// NIST pulse generation, signing & CDN propagation delay buffer in ms (40 seconds)
+const NIST_DELAY_OFFSET_MS = 40 * 1000;
 
 /**
  * Gets the browser's local timezone or falls back to UTC.
@@ -452,9 +452,9 @@ export default function Dice(): React.ReactElement {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     if (mins > 0) {
-      return `${mins}m ${secs}s remaining (incl. ~30s NIST release buffer)`;
+      return `${mins}m ${secs}s remaining (incl. ~40s NIST release buffer)`;
     }
-    return `${secs}s remaining (incl. ~30s NIST release buffer)`;
+    return `${secs}s remaining (incl. ~40s NIST release buffer)`;
   };
 
   const isScheduledRollDisabled =
@@ -637,7 +637,7 @@ export default function Dice(): React.ReactElement {
           </button>
 
           <p className={styles.scheduledNote}>
-            NIST generates pulses every 60 seconds (aligned to UTC minute boundaries) with a ~30 second delay for digital signing and distribution.
+            NIST generates pulses every 60 seconds (aligned to UTC minute boundaries) with a ~40 second delay for digital signing and distribution.
           </p>
           <div className={styles.subSectionSpacing}>
             <strong>Target Pulse URI:</strong>{' '}
