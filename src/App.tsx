@@ -26,21 +26,21 @@ export function App() {
   const [currentSection, setCurrentSection] = useState<'rulesets' | 'dice' | 'links'>(() =>
     getSectionFromPath(window.location.pathname)
   );
-  
+
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [showRawText, setShowRawText] = useState<boolean>(false);
   const [showTopWordsHelp, setShowTopWordsHelp] = useState<boolean>(false);
   const [showUniqueWordsHelp, setShowUniqueWordsHelp] = useState<boolean>(false);
   const [selectedTopWord, setSelectedTopWord] = useState<string | null>(null);
   const [similarityFilter, setSimilarityFilter] = useState<'All' | 'Games' | 'Templates'>('All');
-  
+
   const [phraseLength, setPhraseLength] = useState<number>(1);
 
   // Function to switch tabs and update the URL cleanly without a page reload
   const navigateToSection = (section: 'rulesets' | 'dice' | 'links') => {
     setCurrentSection(section);
     const targetPath = section === 'rulesets' ? '/' : `/${section}.html`;
-    
+
     // Only push state if the URL is different to prevent duplicate history entries
     if (window.location.pathname !== targetPath) {
       window.history.pushState({ section }, '', targetPath);
@@ -296,7 +296,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
           <h1>IntroNomic</h1>
           <p className="app-subtitle">All about nomic-like games, especially the stuff you cannot find elsewhere</p>
         </div>
-        
+
         <nav className="site-nav-tabs">
           <button
             className={`nav-tab-btn ${currentSection === 'rulesets' ? 'active' : ''}`}
@@ -364,7 +364,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   {currentMetrics.error}
                 </p>
                 <p style={{ marginBottom: '1rem', lineHeight: '1.5' }}>
-                  Sorry for the error. Please visit the new frontend on <a
+                  Sorry for the error. Please visit the new frontend on{' '}
+                  <a
                     href="https://www.intronomic.workers.dev/"
                     target="_blank"
                     rel="noreferrer"
@@ -376,7 +377,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                     }}
                   >
                     https://www.intronomic.workers.dev/ ↗
-                  </a>. I have fixed more errors there.
+                  </a>
+                  . I have fixed more errors there.
                 </p>
               </div>
             ) : (
@@ -392,15 +394,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                           .join(' aka ') + ' 😉'}
                       </p>
                     )}
-                    {currentRuleset.category !== 'Templates' && relativeAge && (
-                      <p className="last-changed-subtitle">
-                        Current ruleset is{' '}
-                        <span className="last-changed-value" style={{ color: dateColor }}>
-                          {relativeAge}
-                        </span>
-                      </p>
-                    )}
                   </div>
+
                   <div className="header-links">
                     {currentRuleset.category === 'Templates' ? (
                       <span className="template-badge">Template</span>
@@ -419,6 +414,29 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                     )}
                   </div>
                 </div>
+
+                {/* Prominent Game Status Banner for Ruleset Age & Active Players */}
+                {(relativeAge || currentMetrics.extraMetric) && (
+                  <div className="game-status-banner">
+                    {currentRuleset.category !== 'Templates' && relativeAge && (
+                      <div className="status-badge-item">
+                        <span className="status-label">Ruleset Age</span>
+                        <span className="status-value" style={{ color: dateColor }}>
+                          🗓️ {relativeAge}
+                        </span>
+                      </div>
+                    )}
+
+                    {currentMetrics.extraMetric && (
+                      <div className="status-badge-item">
+                        <span className="status-label">{currentMetrics.extraMetric.label}</span>
+                        <span className="status-value highlight-value">
+                          👥 {currentMetrics.extraMetric.value} Active Players
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="card">
                   <div className="section-header similarity-header">

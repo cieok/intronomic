@@ -5,6 +5,7 @@ export interface RulesetConfig {
   linkUrl: string;
   homeUrl: string;
   isJsonApi?: boolean;
+  fetchExtraMetric?: () => Promise<number | null>;
 }
 
 export interface MetricData {
@@ -17,6 +18,7 @@ export interface MetricData {
   error: string | null;
   lastModified?: string | null;
   rawDate?: Date | null;
+  extraMetric?: { label: string; value: string | number } | null;
 }
 
 export const INITIAL_RULESETS: RulesetConfig[] = [
@@ -34,15 +36,35 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
     homeUrl: 'https://blognomic.com/',
     isJsonApi: true,
+    fetchExtraMetric: async () => {
+      try {
+        const res = await fetch('/api/blognomic');
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.players ?? null;
+      } catch {
+        return null;
+      }
+    },
   },
   {
     id: 'nomicron',
     name: 'Nomicron',
-    fetchUrl: '/api/nomicron', // Fetches pre-parsed plain text from Cloudflare function
+    fetchUrl: '/api/nomicron',
     linkUrl: 'https://nomicron.org/rules/',
     homeUrl: 'https://nomicron.org/',
+    fetchExtraMetric: async () => {
+      try {
+        const res = await fetch('/api/nomicron-players');
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.players ?? null;
+      } catch {
+        return null;
+      }
+    },
   },
-    {
+  {
     id: 'infinite',
     name: 'Infinite Nomic',
     fetchUrl: 'https://infinite.nomic.space/wiki/api.php?action=query&titles=Metaruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*',
@@ -50,7 +72,6 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     homeUrl: 'https://infinite.nomic.space/',
     isJsonApi: true,
   },
-
 ];
 
 export const BANNED_AKA_WORDS = new Set([
@@ -145,9 +166,8 @@ export function calculateRulesetHealth(date: Date | null | undefined): {
   const daysAgo = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   const maxDays = 28;
-  const factor = Math.min(1, daysAgo / maxDays); // 0.0 (fresh) to 1.0 (28+ days old)
+  const factor = Math.min(1, daysAgo / maxDays);
 
-  // Linear RGB interpolation from Green rgb(34, 197, 94) to Red rgb(239, 68, 68)
   const r = Math.round(34 + (239 - 34) * factor);
   const g = Math.round(197 - (197 - 68) * factor);
   const b = Math.round(94 - (94 - 68) * factor);
@@ -196,6 +216,14 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
     }
   }
 
+  let extraMetric = null;
+  if (ruleset.fetchExtraMetric) {
+    const val = await ruleset.fetchExtraMetric();
+    if (val !== null) {
+      extraMetric = { label: 'Active Players', value: val };
+    }
+  }
+
   const tokens = text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
@@ -216,5 +244,6 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
     wordCounts,
     lastModified,
     rawDate,
+    extraMetric,
   };
 }
