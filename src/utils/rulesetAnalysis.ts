@@ -28,6 +28,16 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     fetchUrl: 'https://agoranomic.org/ruleset/slr.txt',
     linkUrl: 'https://agoranomic.org/ruleset/slr.txt',
     homeUrl: 'https://agoranomic.org/',
+    fetchExtraMetric: async () => {
+      try {
+        const res = await fetch('/api/agora-players');
+        if (!res.ok) return null;
+        const data = (await res.json()) as { players?: number };
+        return data.players ?? null;
+      } catch {
+        return null;
+      }
+    },
   },
   {
     id: 'blognomic',

@@ -1,7 +1,7 @@
 import '@cloudflare/workers-types';
 
 export interface Env {
-  TEST: KVNamespace;
+  KV: KVNamespace;
   ASSETS: {
     fetch: (request: Request) => Promise<Response>;
   };
@@ -17,17 +17,25 @@ export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // --- TEST / CRON STATUS ROUTE ---
-    if (url.pathname === "/api/cron-status") {
+    // --- Handle Agora Players API route (Reads directly from KV) ---
+    if (url.pathname.startsWith('/api/agora-players')) {
       try {
-        // Force a write right now for testing and populating KV pairs instantly
-        await handleCron(env);
+        const playerCountStr = await env.KV.get('agora_player_count');
+        
+        if (playerCountStr !== null) {
+          const playerCount = parseInt(playerCountStr, 10);
+          return Response.json({ players: playerCount }, {
+            status: 200,
+            headers: {
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        }
 
-        const lastRun = await env.TEST.get("last_cron_timestamp") || "Never run yet";
-        return Response.json({ last_cron_run: lastRun, status: "KV write triggered successfully" });
+        return Response.json({ error: 'Agora player count not found in KV' }, { status: 404 });
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        return Response.json({ error: errorMessage }, { status: 500 });
+        return Response.json({ error: 'Failed to read Agora players from KV', details: errorMessage }, { status: 500 });
       }
     }
 
@@ -168,7 +176,7 @@ export default {
 async function handleCron(env: Env) {
   try {
     const timestamp = new Date().toISOString();
-    await env.TEST.put("last_cron_timestamp", timestamp);
+    await env.KV.put("last_cron_timestamp", timestamp);
     console.log(`Cron successfully ran and wrote timestamp: ${timestamp}`);
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
