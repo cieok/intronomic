@@ -5,7 +5,7 @@ export interface RulesetConfig {
   linkUrl: string;
   homeUrl: string;
   isJsonApi?: boolean;
-  fetchExtraMetric?: () => Promise<number | null>;
+  fetchPlayers?: boolean;
 }
 
 export interface MetricData {
@@ -18,7 +18,7 @@ export interface MetricData {
   error: string | null;
   lastModified?: string | null;
   rawDate?: Date | null;
-  extraMetric?: { label: string; value: string | number } | null;
+  players?: number | null;
 }
 
 export const INITIAL_RULESETS: RulesetConfig[] = [
@@ -28,16 +28,7 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     fetchUrl: 'https://agoranomic.org/ruleset/slr.txt',
     linkUrl: 'https://agoranomic.org/ruleset/slr.txt',
     homeUrl: 'https://agoranomic.org/',
-    fetchExtraMetric: async () => {
-      try {
-        const res = await fetch('/api/agora-players');
-        if (!res.ok) return null;
-        const data = (await res.json()) as { players?: number };
-        return data.players ?? null;
-      } catch {
-        return null;
-      }
-    },
+    fetchPlayers: true,
   },
   {
     id: 'blognomic',
@@ -46,17 +37,7 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
     homeUrl: 'https://blognomic.com/',
     isJsonApi: true,
-    fetchExtraMetric: async () => {
-      try {
-        const res = await fetch('/api/blognomic');
-        if (!res.ok) return null;
-        // Fixed: Cast json data as any/record to avoid 'is of type unknown' error
-        const data = (await res.json()) as { players?: number };
-        return data.players ?? null;
-      } catch {
-        return null;
-      }
-    },
+    fetchPlayers: true,
   },
   {
     id: 'nomicron',
@@ -64,17 +45,7 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     fetchUrl: '/api/nomicron',
     linkUrl: 'https://nomicron.org/rules/',
     homeUrl: 'https://nomicron.org/',
-    fetchExtraMetric: async () => {
-      try {
-        const res = await fetch('/api/nomicron-players');
-        if (!res.ok) return null;
-        // Fixed: Cast json data as any/record to avoid 'is of type unknown' error
-        const data = (await res.json()) as { players?: number };
-        return data.players ?? null;
-      } catch {
-        return null;
-      }
-    },
+    fetchPlayers: true,
   },
   {
     id: 'infinite',
@@ -198,7 +169,6 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
   let rawDateString: string | null = null;
 
   if (ruleset.isJsonApi) {
-    // Fixed: Cast json data explicitly to avoid 'is of type unknown' errors
     const json = (await res.json()) as {
       query?: {
         pages?: Record<string, {
@@ -211,7 +181,6 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
       };
     };
     
-    // Fixed line ~190: ensure query property access is safely typed
     const pages = json?.query?.pages;
     if (pages) {
       const pageKey = Object.keys(pages)[0];
@@ -241,11 +210,16 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
     }
   }
 
-  let extraMetric = null;
-  if (ruleset.fetchExtraMetric) {
-    const val = await ruleset.fetchExtraMetric();
-    if (val !== null) {
-      extraMetric = { label: 'Active Players', value: val };
+  let players: number | null = null;
+  if (ruleset.fetchPlayers) {
+    try {
+      const playerRes = await fetch(`/api/players?id=${ruleset.id}`);
+      if (playerRes.ok) {
+        const playerData = (await playerRes.json()) as { players?: number };
+        players = playerData.players ?? null;
+      }
+    } catch {
+      players = null;
     }
   }
 
@@ -269,6 +243,6 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
     wordCounts,
     lastModified,
     rawDate,
-    extraMetric,
+    players,
   };
 }

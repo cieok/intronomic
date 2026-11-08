@@ -17,10 +17,18 @@ export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // --- Handle Agora Players API route (Reads directly from KV) ---
-    if (url.pathname.startsWith('/api/agora-players')) {
+    // --- Dynamic Query Parameter Players API route: /api/players?id={id} ---
+    if (url.pathname === '/api/players') {
+      const id = url.searchParams.get('id');
+
+      if (!id || !/^[a-z0-9_-]+$/.test(id)) {
+        return Response.json({ error: 'Valid id parameter is required' }, { status: 400 });
+      }
+
+      const kvKey = `${id}_players`; // e.g. 'agora' -> 'agora_players'
+
       try {
-        const playerCountStr = await env.KV.get('agora_players');
+        const playerCountStr = await env.KV.get(kvKey);
         
         if (playerCountStr !== null) {
           const playerCount = parseInt(playerCountStr, 10);
@@ -32,58 +40,14 @@ export default {
           });
         }
 
-        return Response.json({ error: 'Agora player count not found in KV' }, { status: 404 });
+        return Response.json({ error: `${id} player count not found in KV` }, { status: 404 });
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        return Response.json({ error: 'Failed to read Agora players from KV', details: errorMessage }, { status: 500 });
+        return Response.json({ error: `Failed to read ${id} players from KV`, details: errorMessage }, { status: 500 });
       }
     }
 
-    // --- Handle Nomicron Players API route (Reads directly from KV) ---
-    if (url.pathname.startsWith('/api/nomicron-players')) {
-      try {
-        const playerCountStr = await env.KV.get('nomicron_players');
-
-        if (playerCountStr !== null) {
-          const playerCount = parseInt(playerCountStr, 10);
-          return Response.json({ players: playerCount }, {
-            status: 200,
-            headers: {
-              'Cache-Control': 'public, max-age=3600',
-            },
-          });
-        }
-
-        return Response.json({ error: 'Nomicron player count not found in KV' }, { status: 404 });
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        return Response.json({ error: 'Failed to read Nomicron players from KV', details: errorMessage }, { status: 500 });
-      }
-    }
-
-    // --- Handle BlogNomic API route (Reads directly from KV) ---
-    if (url.pathname.startsWith('/api/blognomic')) {
-      try {
-        const playerCountStr = await env.KV.get('blognomic_players');
-
-        if (playerCountStr !== null) {
-          const playerCount = parseInt(playerCountStr, 10);
-          return Response.json({ players: playerCount }, {
-            status: 200,
-            headers: {
-              'Cache-Control': 'public, max-age=3600',
-            },
-          });
-        }
-
-        return Response.json({ error: 'BlogNomic player count not found in KV' }, { status: 404 });
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        return Response.json({ error: 'Failed to read BlogNomic players from KV', details: errorMessage }, { status: 500 });
-      }
-    }
-
-    // Handle Nomicron Rules API route
+    // --- Handle Nomicron Rules API route ---
     if (url.pathname.startsWith('/api/nomicron')) {
       try {
         const externalResponse = await fetch('https://nomicron.org/rules/', {
