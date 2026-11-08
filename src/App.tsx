@@ -416,7 +416,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                 </div>
 
                 {/* Prominent Game Status Banner for Ruleset Age & Active Players */}
-                {(relativeAge || currentMetrics.extraMetric) && (
+                {(relativeAge || (currentMetrics.players !== null && currentMetrics.players !== undefined)) && (
                   <div className="game-status-banner">
                     {currentRuleset.category !== 'Templates' && relativeAge && (
                       <div className="status-badge-item">
@@ -427,11 +427,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                       </div>
                     )}
 
-                    {currentMetrics.extraMetric && (
+                    {currentMetrics.players !== null && currentMetrics.players !== undefined && (
                       <div className="status-badge-item">
-                        <span className="status-label">{currentMetrics.extraMetric.label}</span>
+                        <span className="status-label">Active Players</span>
                         <span className="status-value highlight-value">
-                          👥 {currentMetrics.extraMetric.value} Active Players
+                          👥 {currentMetrics.players} Active Players
                         </span>
                       </div>
                     )}
