@@ -61,7 +61,29 @@ export default {
       }
     }
 
-    // 2. Handle Nomicron Rules API route
+    // --- Handle BlogNomic API route (Reads directly from KV) ---
+    if (url.pathname.startsWith('/api/blognomic')) {
+      try {
+        const playerCountStr = await env.KV.get('blognomic_players');
+
+        if (playerCountStr !== null) {
+          const playerCount = parseInt(playerCountStr, 10);
+          return Response.json({ players: playerCount }, {
+            status: 200,
+            headers: {
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        }
+
+        return Response.json({ error: 'BlogNomic player count not found in KV' }, { status: 404 });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to read BlogNomic players from KV', details: errorMessage }, { status: 500 });
+      }
+    }
+
+    // Handle Nomicron Rules API route
     if (url.pathname.startsWith('/api/nomicron')) {
       try {
         const externalResponse = await fetch('https://nomicron.org/rules/', {
@@ -104,43 +126,6 @@ export default {
       }
     }
 
-    // 3. Handle BlogNomic API route (extracts player count)
-    if (url.pathname.startsWith('/api/blognomic')) {
-      try {
-        const externalResponse = await fetch('https://blognomic.com/', {
-          headers: { 'User-Agent': 'Nomicinfra-App' },
-        });
-
-        if (!externalResponse.ok) {
-          return new Response(JSON.stringify({ error: `Upstream HTTP ${externalResponse.status}` }), {
-            status: externalResponse.status,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-
-        const htmlText = await externalResponse.text();
-        const cleanText = htmlText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-
-        // Matches phrase like "There are 10 Players" case-insensitively
-        const match = cleanText.match(/there\s+are\s+(\d+)\s+players/i);
-
-        if (match && match[1]) {
-          const playerCount = parseInt(match[1], 10);
-          return Response.json({ players: playerCount }, {
-            status: 200,
-            headers: {
-              'Cache-Control': 'public, max-age=3600',
-            },
-          });
-        }
-
-        return Response.json({ error: 'Player count not found on page' }, { status: 404 });
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        return Response.json({ error: 'Failed to fetch or parse BlogNomic', details: errorMessage }, { status: 500 });
-      }
-    }
-
     // 4. Explicitly handle your multi-page entry point from Vite config
     if (url.pathname === '/dice' || url.pathname === '/dice.html') {
       return env.ASSETS.fetch(new Request(new URL('/dice.html', request.url), request));
@@ -163,16 +148,21 @@ async function handleCron(env: Env) {
   // 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
 
   try {
-    // Example: Run Agora update on Fridays (Day 5)
+    // Run Agora update on Fridays (Day 5)
     if (dayOfWeek === 5) {
       console.log('Executing Friday task: Agora Players Update');
       await updateAgoraPlayers(env);
     } 
-    // Example: Run Nomicron update on Mondays (Day 1)
+    // Run Nomicron update on Mondays (Day 1)
     else if (dayOfWeek === 1) {
       console.log('Executing Monday task: Nomicron Players Update');
       await updateNomicronPlayers(env);
     } 
+    // Run BlogNomic update on Wednesdays (Day 3)
+    else if (dayOfWeek === 3) {
+      console.log('Executing Wednesday task: BlogNomic Players Update');
+      await updateBlogNomicPlayers(env);
+    }
     else {
       console.log(`Cron triggered on day ${dayOfWeek}, but no task is scheduled for today.`);
     }
@@ -228,7 +218,7 @@ async function updateAgoraPlayers(env: Env) {
 
 // --- Task Helper: Update Nomicron Players ---
 async function updateNomicronPlayers(env: Env) {
-  const externalResponse = await fetch('https://nomic.org/players', {
+  const externalResponse = await fetch('https://nomicron.org/players', {
     headers: { 'User-Agent': 'Nomicinfra-App' },
   });
 
@@ -246,5 +236,28 @@ async function updateNomicronPlayers(env: Env) {
     console.log(`Successfully updated Nomicron player count to KV: ${playerCount}`);
   } else {
     console.log('Player count not found on Nomicron players page.');
+  }
+}
+
+// --- Task Helper: Update BlogNomic Players ---
+async function updateBlogNomicPlayers(env: Env) {
+  const externalResponse = await fetch('https://blognomic.com/', {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!externalResponse.ok) {
+    throw new Error(`Failed to fetch BlogNomic page: Upstream HTTP ${externalResponse.status}`);
+  }
+
+  const htmlText = await externalResponse.text();
+  const cleanText = htmlText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  const match = cleanText.match(/there\s+are\s+(\d+)\s+players/i);
+
+  if (match && match[1]) {
+    const playerCount = parseInt(match[1], 10);
+    await env.KV.put('blognomic_players', playerCount.toString());
+    console.log(`Successfully updated BlogNomic player count to KV: ${playerCount}`);
+  } else {
+    console.log('Player count not found on BlogNomic page.');
   }
 }
