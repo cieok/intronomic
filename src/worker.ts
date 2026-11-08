@@ -221,7 +221,7 @@ async function handleCron(env: Env) {
       const playerCount = parseInt(playerMatch[1], 10);
       
       // 5. Save the parsed player count into KV
-      await env.KV.put('agora_player_count', (playerCount + 4).toString());
+      await env.KV.put('agora_player_count', playerCount.toString());
       console.log(`Successfully updated Agora player count to KV: ${playerCount}`);
     } else {
       console.log('Could not find active players count pattern in the weekly report email text.');
