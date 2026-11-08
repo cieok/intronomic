@@ -36,9 +36,6 @@ export function App() {
 
   const [phraseLength, setPhraseLength] = useState<number>(1);
 
-  // Sorting and filtering state for the games list
-  const [gameSort, setGameSort] = useState<'players' | 'date'>('players');
-
   // Function to switch tabs and update the URL cleanly without a page reload
   const navigateToSection = (section: 'rulesets' | 'dice' | 'links') => {
     setCurrentSection(section);
@@ -67,37 +64,11 @@ export function App() {
     setSelectedTopWord(null);
   };
 
-  // Separated & sorted games list by number of players or latest update
-  const sortedGames = useMemo(() => {
-    const games = rulesets.filter((r) => r.category === 'Games');
-    return games
-      .map((r) => {
-        const metrics = dataMap[r.id];
-        return {
-          ruleset: r,
-          metrics,
-          players: metrics?.players ?? 0,
-          lastModified: metrics?.lastModified ? new Date(metrics.lastModified).getTime() : 0,
-        };
-      })
-      .sort((a, b) => {
-        if (gameSort === 'players') {
-          if (b.players !== a.players) {
-            return b.players - a.players;
-          }
-          return b.lastModified - a.lastModified;
-        } else {
-          if (b.lastModified !== a.lastModified) {
-            return b.lastModified - a.lastModified;
-          }
-          return b.players - a.players;
-        }
-      });
-  }, [rulesets, dataMap, gameSort]);
-
-  // Templates list kept under templates label
-  const templateRulesets = useMemo(() => {
-    return rulesets.filter((r) => r.category === 'Templates');
+  const groupedRulesets = useMemo(() => {
+    return {
+      Games: rulesets.filter((r) => r.category === 'Games'),
+      Templates: rulesets.filter((r) => r.category === 'Templates'),
+    };
   }, [rulesets]);
 
   const maxRulesetWords = useMemo(() => {
@@ -312,6 +283,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
 
   const currentSizePct = getScaledSizePct(currentMetrics?.words || 0);
 
+  const sizeBarStyle: React.CSSProperties = {
+    backgroundColor: '#00b4d8',
+    backgroundImage: 'linear-gradient(to right, #0077b6, #00b4d8)',
+  };
+
   return (
     <div className="app-container">
       {/* Header featuring clear primary sections */}
@@ -347,79 +323,28 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
       {currentSection === 'rulesets' && (
         <div className="layout-body">
           <aside className="sidebar-nav">
-            {/* GAMES GROUP WITH SORT CONTROLS */}
-            <div className="nav-group">
-              <div className="group-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span>Games</span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    className={`sort-btn ${gameSort === 'players' ? 'active' : ''}`}
-                    onClick={() => setGameSort('players')}
-                    style={{ fontSize: '0.75rem', padding: '2px 6px', cursor: 'pointer' }}
-                    title="Sort by number of players"
-                  >
-                    👥 Players
-                  </button>
-                  <button
-                    className={`sort-btn ${gameSort === 'date' ? 'active' : ''}`}
-                    onClick={() => setGameSort('date')}
-                    style={{ fontSize: '0.75rem', padding: '2px 6px', cursor: 'pointer' }}
-                    title="Sort by latest update"
-                  >
-                    🕒 Updated
-                  </button>
-                </div>
-              </div>
-              <div className="nav-list">
-                {sortedGames.map(({ ruleset, metrics }, index) => {
-                  const isActive = ruleset.id === activeTabId;
-                  const playerCount = metrics?.players ?? null;
-                  const ageText = formatRelativeAge(metrics?.lastModified);
-                  const ageColor = getDateColor(metrics?.lastModified);
-
-                  return (
-                    <button
-                      key={ruleset.id}
-                      onClick={() => handleSelectRuleset(ruleset.id)}
-                      className={`nav-item ${isActive ? 'active' : ''}`}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 500 }}>
-                          <span style={{ opacity: 0.6, marginRight: '6px', fontSize: '0.8rem' }}>#{index + 1}</span>
+            {Object.entries(groupedRulesets).map(([category, items]) => {
+              if (items.length === 0) return null;
+              return (
+                <div key={category} className="nav-group">
+                  <div className="group-label">{category}</div>
+                  <div className="nav-list">
+                    {items.map((ruleset) => {
+                      const isActive = ruleset.id === activeTabId;
+                      return (
+                        <button
+                          key={ruleset.id}
+                          onClick={() => handleSelectRuleset(ruleset.id)}
+                          className={`nav-item ${isActive ? 'active' : ''}`}
+                        >
                           {ruleset.name}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', opacity: 0.85, width: '100%', justifyContent: 'space-between' }}>
-                        <span>{playerCount !== null ? `👥 ${playerCount}` : '👥 —'}</span>
-                        {ageText && <span style={{ color: ageColor !== 'inherit' ? ageColor : 'inherit' }}>🗓️ {ageText}</span>}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* TEMPLATES GROUP */}
-            {templateRulesets.length > 0 && (
-              <div className="nav-group" style={{ marginTop: '16px' }}>
-                <div className="group-label">Templates</div>
-                <div className="nav-list">
-                  {templateRulesets.map((ruleset) => {
-                    const isActive = ruleset.id === activeTabId;
-                    return (
-                      <button
-                        key={ruleset.id}
-                        onClick={() => handleSelectRuleset(ruleset.id)}
-                        className={`nav-item ${isActive ? 'active' : ''}`}
-                      >
-                        {ruleset.name}
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })}
           </aside>
 
           <main className="main-content">
@@ -428,14 +353,14 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                 <h2>Welcome to IntroNomic</h2>
                 <p>Select a game or template from the left sidebar to compare nomic rulesets across games and templates.</p>
                 <p>Try the "NIST Beacon Dice" tab to generate cryptographically verifiable random numbers and simulate dice rolls.</p>
-                <p>Visit the "External Resources" tab for deeper documentation, community resources, and infrastructure.</p>
+                <p>Visit the "External Resources" tab for deeper documentation, community leaderboards, and infrastructure.</p>
               </div>
             ) : !currentMetrics || currentMetrics.loading ? (
               <p>Loading ruleset data...</p>
             ) : currentMetrics.error ? (
               <div className="card error-card" style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}>
                 <h3 style={{ color: '#d90429', marginBottom: '0.75rem' }}>Error Loading {currentRuleset.name}</h3>
-                <p className="error-text" style={{ marginBottom: '1.25rem' }}>
+                <p className="error-text" style={{ marginBottom: '1.25rem', color: 'var(--text-secondary, #666)' }}>
                   {currentMetrics.error}
                 </p>
                 <p style={{ marginBottom: '1rem', lineHeight: '1.5' }}>
@@ -610,8 +535,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                       <div
                         className="progress-bar-fill size-bar-fill"
                         style={{
-                          backgroundImage: 'linear-gradient(to right, #0077b6, #00b4d8)',
-                          backgroundColor: '#00b4d8',
+                          ...sizeBarStyle,
                           '--progress-width': `${currentSizePct}%`,
                         } as React.CSSProperties}
                       />
@@ -689,8 +613,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                                   <div
                                     className="progress-bar-fill size-bar-fill"
                                     style={{
-                                      backgroundImage: 'linear-gradient(to right, #0077b6, #00b4d8)',
-                                      backgroundColor: '#00b4d8',
+                                      ...sizeBarStyle,
                                       '--progress-width': `${otherSizePct}%`,
                                     } as React.CSSProperties}
                                   />
