@@ -20,10 +20,14 @@ export default {
     // --- TEST / CRON STATUS ROUTE ---
     if (url.pathname === "/api/cron-status") {
       try {
+        // Force a write right now for testing and populating KV pairs instantly
+        await handleCron(env);
+
         const lastRun = await env.TEST.get("last_cron_timestamp") || "Never run yet";
-        return Response.json({ last_cron_run: lastRun });
-      } catch (err: any) {
-        return Response.json({ error: err.message }, { status: 500 });
+        return Response.json({ last_cron_run: lastRun, status: "KV write triggered successfully" });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: errorMessage }, { status: 500 });
       }
     }
 
@@ -58,8 +62,9 @@ export default {
         }
 
         return Response.json({ error: 'Player count not found on Nomicron players page' }, { status: 404 });
-      } catch (err: any) {
-        return Response.json({ error: 'Failed to fetch or parse Nomicron players', details: err.message }, { status: 500 });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to fetch or parse Nomicron players', details: errorMessage }, { status: 500 });
       }
     }
 
@@ -100,8 +105,9 @@ export default {
             'Cache-Control': 'public, max-age=3600',
           },
         });
-      } catch (err: any) {
-        return Response.json({ error: 'Failed to fetch or parse rules', details: err.message }, { status: 500 });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to fetch or parse rules', details: errorMessage }, { status: 500 });
       }
     }
 
@@ -136,8 +142,9 @@ export default {
         }
 
         return Response.json({ error: 'Player count not found on page' }, { status: 404 });
-      } catch (err: any) {
-        return Response.json({ error: 'Failed to fetch or parse BlogNomic', details: err.message }, { status: 500 });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to fetch or parse BlogNomic', details: errorMessage }, { status: 500 });
       }
     }
 
@@ -163,7 +170,9 @@ async function handleCron(env: Env) {
     const timestamp = new Date().toISOString();
     await env.TEST.put("last_cron_timestamp", timestamp);
     console.log(`Cron successfully ran and wrote timestamp: ${timestamp}`);
-  } catch (err: any) {
-    console.error("Failed to write cron timestamp to KV:", err.message);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error("Failed to write cron timestamp to KV:", errorMessage);
+    throw err;
   }
 }
