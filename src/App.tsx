@@ -329,7 +329,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                 <div key={category} className="nav-group">
                   <div className="group-label">{category}</div>
                   <div className="nav-list">
-                    {items.map((ruleset) => {
+                    {items.map((ruleset, index) => {
                       const isActive = ruleset.id === activeTabId;
                       const isTemplate = ruleset.category === 'Templates';
                       const metrics = dataMap[ruleset.id];
@@ -338,6 +338,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         ? metrics.players
                         : (!isTemplate ? '??' : null);
 
+                      const gamePrefix = category === 'Games' ? `#${index + 1} ` : '';
+
                       return (
                         <button
                           key={ruleset.id}
@@ -345,12 +347,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                           className={`nav-item ${isActive ? 'active' : ''}`}
                         >
                           <div className="nav-item-content">
-                            <span className="nav-item-name">{ruleset.name}</span>
+                            <span className="nav-item-name">{gamePrefix}{ruleset.name}</span>
                             {!isTemplate && (
                               <div className="nav-item-meta">
                                 <span title={players === '??' ? 'Active players unknown' : `${players} Active Players`}>
-                                  👥 {players}
-                                </span>
+                                  👥 {players}                                </span>
                               </div>
                             )}
                           </div>
