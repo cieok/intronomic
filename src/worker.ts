@@ -157,12 +157,12 @@ async function handleCron(env: Env) {
       await updateAgoraPlayers(env);
     } 
     // Run Nomicron update on Mondays (Day 1)
-    else if (dayOfWeek === 2) {
+    else if (dayOfWeek === 1) {
       console.log('Executing Monday task: Nomicron Players Update');
       await updateNomicronPlayers(env);
     } 
     // Run BlogNomic update on Wednesdays (Day 3)
-    else if (dayOfWeek === 1) {
+    else if (dayOfWeek === 3) {
       console.log('Executing Wednesday task: BlogNomic Players Update');
       await updateBlogNomicPlayers(env);
     }
