@@ -152,7 +152,7 @@ async function handleCron(env: Env) {
 
   try {
     // Run Agora update on Fridays (Day 5)
-    if (dayOfWeek === 5) {
+    if (dayOfWeek === 1) {
       console.log('Executing Friday task: Agora Players Update');
       await updateAgoraPlayers(env);
     } 
