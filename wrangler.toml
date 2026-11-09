@@ -15,7 +15,7 @@ enabled = true
 invocation_logs = false
 
 [triggers]
-crons = ["*/7 * * * 1,3,5"]
+crons = ["*/5 * * * *"]
 
 [[kv_namespaces]]
 binding = "KV"
