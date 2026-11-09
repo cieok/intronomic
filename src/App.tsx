@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import Dice from './pages/Dice';
-import ExternalLinks from './pages/ExternalLinks';
+import Dice from './components/Dice';
+import ExternalLinks from './components/ExternalLinks';
 import { RulesetAnalysisView } from './components/RulesetAnalysisView';
 
 const getSectionFromPath = (path: string): 'rulesets' | 'dice' | 'links' => {
