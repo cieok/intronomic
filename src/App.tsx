@@ -377,7 +377,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
           <main className="main-content">
             {!activeTabId || !currentRuleset ? (
               <div className="card welcome-card">
-                <h2>Welcome to IntroNomic</h2>
+                <h2>Welcome to NomicHub</h2>
                 <p>Select a game or template from the left sidebar to compare nomic rulesets across games and templates.</p>
                 <p>Try the "NIST Beacon Dice" tab to generate cryptographically verifiable random numbers and simulate dice rolls.</p>
                 <p>Visit the "External Resources" tab for deeper documentation, community leaderboards, and infrastructure.</p>
