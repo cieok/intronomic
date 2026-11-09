@@ -31,20 +31,20 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     fetchPlayers: true,
   },
   {
+    id: 'nomicron',
+    name: 'Nomicron',
+    fetchUrl: '/api/nomicron',
+    linkUrl: 'https://nomicron.org/rules/',
+    homeUrl: 'https://nomicron.org/',
+    fetchPlayers: true,
+  },
+  {
     id: 'blognomic',
     name: 'BlogNomic',
     fetchUrl: 'https://wiki.blognomic.com/api.php?action=query&titles=Ruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*',
     linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
     homeUrl: 'https://blognomic.com/',
     isJsonApi: true,
-    fetchPlayers: true,
-  },
-  {
-    id: 'nomicron',
-    name: 'Nomicron',
-    fetchUrl: '/api/nomicron',
-    linkUrl: 'https://nomicron.org/rules/',
-    homeUrl: 'https://nomicron.org/',
     fetchPlayers: true,
   },
   {
