@@ -37,6 +37,17 @@ export function RulesetAnalysisView() {
     return max || 1;
   }, [rulesets, dataMap]);
 
+  const maxPlayersCount = useMemo(() => {
+    let max = 0;
+    rulesets.forEach((r) => {
+      const metrics = dataMap[r.id];
+      if (metrics && !metrics.loading && !metrics.error && typeof metrics.players === 'number') {
+        if (metrics.players > max) max = metrics.players;
+      }
+    });
+    return max || 1;
+  }, [rulesets, dataMap]);
+
   const getScaledSizePct = (words: number) => {
     if (!words || words <= 0) return 0;
     const sqrtVal = Math.sqrt(words);
@@ -248,10 +259,25 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
       <aside className="sidebar-nav">
         {Object.entries(groupedRulesets).map(([category, items]) => {
           if (items.length === 0) return null;
+          const isTemplateCategory = category === 'Templates';
+
           return (
-            <div key={category} className="nav-group">
-              <div className="group-label">{category}</div>
-              <div className="nav-list">
+            <div key={category} className="nav-group" style={{ marginBottom: '1.25rem' }}>
+              <div
+                className="group-label"
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-secondary, #888)',
+                  padding: '4px 8px',
+                  marginBottom: '4px',
+                }}
+              >
+                {category}
+              </div>
+              <div className="nav-list" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 {items.map((ruleset, index) => {
                   const isActive = ruleset.id === activeTabId;
                   const isTemplate = ruleset.category === 'Templates';
@@ -261,32 +287,146 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                     ? metrics.players
                     : (!isTemplate ? '??' : null);
 
+                  const playerNum = typeof players === 'number' ? players : 0;
+                  const playerPct = Math.min(100, Math.max(6, (playerNum / maxPlayersCount) * 100));
+
                   const daysOld = metrics && !metrics.loading && !metrics.error && metrics.lastModified
                     ? Math.max(0, Math.floor((Date.now() - new Date(metrics.lastModified).getTime()) / (1000 * 60 * 60 * 24)))
                     : null;
 
-                  const gamePrefix = category === 'Games' ? `#${index + 1} ` : '';
+                  const rankNumber = index + 1;
 
                   return (
                     <button
                       key={ruleset.id}
                       onClick={() => setActiveTabId(ruleset.id)}
                       className={`nav-item ${isActive ? 'active' : ''}`}
+                      style={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: isActive ? 'rgba(0, 119, 182, 0.1)' : 'transparent',
+                        border: '1px solid',
+                        borderColor: isActive ? 'var(--primary-color, #0077b6)' : 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <div className="nav-item-content" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                        <span className="nav-item-name">{gamePrefix}{ruleset.name}</span>
-                        <div className="nav-item-meta" style={{ alignSelf: 'flex-end', textAlign: 'right', display: 'flex', gap: '8px', fontSize: '0.8rem' }}>
-                          {daysOld !== null && (
-                            <span title={`Ruleset age: ${daysOld} days old`}>
-                              🗓️ {daysOld}d
-                            </span>
-                          )}
-                          {!isTemplate && (
-                            <span title={players === '??' ? 'Active players unknown' : `${players} Active Players`}>
-                              👥 {players}
-                            </span>
-                          )}
-                        </div>
+                      {/* Rank Number Badge (Only shown for Games, omitted for Templates) */}
+                      {!isTemplateCategory ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '24px',
+                            height: '22px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            fontFamily: 'monospace',
+                            borderRadius: '4px',
+                            backgroundColor: isActive
+                              ? 'var(--primary-color, #0077b6)'
+                              : index === 0
+                              ? '#2b2d42'
+                              : index === 1
+                              ? '#4a4e69'
+                              : index === 2
+                              ? '#6c757d'
+                              : 'rgba(0,0,0,0.06)',
+                            color: isActive || index < 3 ? '#ffffff' : 'var(--text-secondary, #666)',
+                          }}
+                        >
+                          #{rankNumber}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '24px',
+                            height: '22px',
+                            fontSize: '0.75rem',
+                            borderRadius: '4px',
+                            backgroundColor: isActive ? 'rgba(0, 119, 182, 0.15)' : 'rgba(0,0,0,0.04)',
+                            color: isActive ? 'var(--primary-color, #0077b6)' : 'var(--text-secondary, #666)',
+                          }}
+                        >
+                          📄
+                        </span>
+                      )}
+
+                      {/* Name & Mini Progress Bar */}
+                      <div className="nav-item-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                        <span
+                          className="nav-item-name"
+                          style={{
+                            fontSize: '0.85rem',
+                            fontWeight: isActive ? 600 : 500,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {ruleset.name}
+                        </span>
+
+                        {!isTemplate && (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '2px',
+                              backgroundColor: 'rgba(0,0,0,0.06)',
+                              borderRadius: '2px',
+                              marginTop: '3px',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: `${playerPct}%`,
+                                height: '100%',
+                                backgroundColor: isActive ? 'var(--primary-color, #0077b6)' : '#adb5bd',
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right Meta Column */}
+                      <div
+                        className="nav-item-meta"
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-end',
+                          fontSize: '0.75rem',
+                          lineHeight: '1.2',
+                          gap: '1px',
+                        }}
+                      >
+                        {!isTemplate && (
+                          <span
+                            style={{ fontWeight: 600, fontFamily: 'monospace' }}
+                            title={players === '??' ? 'Active players unknown' : `${players} Active Players`}
+                          >
+                            {players}
+                          </span>
+                        )}
+                        {daysOld !== null && (
+                          <span
+                            style={{ fontSize: '0.65rem', color: 'var(--text-secondary, #888)' }}
+                            title={`Ruleset age: ${daysOld} days old`}
+                          >
+                            {daysOld}d
+                          </span>
+                        )}
                       </div>
                     </button>
                   );
