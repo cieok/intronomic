@@ -11,8 +11,8 @@ run_worker_first = [
 ]
 
 [observability.logs]
-enabled = false
-invocation_logs = true
+enabled = true
+invocation_logs = false
 
 [triggers]
 crons = ["0 0 * * 1,3,5"]
