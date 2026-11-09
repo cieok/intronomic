@@ -293,7 +293,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
       {/* Header featuring clear primary sections */}
       <header className="app-header">
         <div className="header-title-area">
-          <h1>IntroNomic</h1>
+          <h1>NomicHub</h1>
           <p className="app-subtitle">All about nomic-like games, especially the stuff you cannot find elsewhere</p>
         </div>
 
