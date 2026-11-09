@@ -17,6 +17,26 @@ export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    // --- Manifest API route: /api/manifest ---
+    if (url.pathname === '/api/manifest') {
+      try {
+        const manifestStr = await env.KV.get('manifest');
+        if (manifestStr !== null) {
+          const manifestData = JSON.parse(manifestStr);
+          return Response.json(manifestData, {
+            status: 200,
+            headers: {
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        }
+        return Response.json([], { status: 200 }); // Return empty array if not set yet
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to read manifest from KV', details: errorMessage }, { status: 500 });
+      }
+    }
+
     // --- Dynamic Query Parameter Players API route: /api/players?id={id} ---
     if (url.pathname === '/api/players') {
       const id = url.searchParams.get('id');
@@ -106,6 +126,37 @@ export default {
   },
 };
 
+// --- Helper: Update or append to the 'manifest' KV key using 'id' ---
+async function updateManifest(env: Env, id: string, playerCount: number) {
+  let manifest: Record<string, { players: number }>[] = [];
+
+  try {
+    const existing = await env.KV.get('manifest', { type: 'json' });
+    if (Array.isArray(existing)) {
+      manifest = existing as Record<string, { players: number }>[];
+    }
+  } catch {
+    manifest = [];
+  }
+
+  // Check if an entry for this id already exists in the manifest array
+  let found = false;
+  for (const entry of manifest) {
+    if (entry[id]) {
+      entry[id].players = playerCount;
+      found = true;
+      break;
+    }
+  }
+
+  // If not found, push a new object entry
+  if (!found) {
+    manifest.push({ [id]: { players: playerCount } });
+  }
+
+  await env.KV.put('manifest', JSON.stringify(manifest));
+}
+
 // --- Cron Handler: Forks based on day of week (UTC) ---
 async function handleCron(env: Env) {
   const dayOfWeek = new Date().getUTCDay(); 
@@ -174,7 +225,8 @@ async function updateAgoraPlayers(env: Env) {
   if (playerMatch && playerMatch[1]) {
     const playerCount = parseInt(playerMatch[1], 10);
     await env.KV.put('agora_players', playerCount.toString());
-    console.log(`Successfully updated Agora player count to KV: ${playerCount}`);
+    await updateManifest(env, 'agora', playerCount);
+    console.log(`Successfully updated Agora player count to KV and manifest: ${playerCount}`);
   } else {
     console.log('Could not find active players count pattern in the weekly report email text.');
   }
@@ -197,7 +249,8 @@ async function updateNomicronPlayers(env: Env) {
   if (match && match[1]) {
     const playerCount = parseInt(match[1], 10);
     await env.KV.put('nomicron_players', playerCount.toString());
-    console.log(`Successfully updated Nomicron player count to KV: ${playerCount}`);
+    await updateManifest(env, 'nomicron', playerCount);
+    console.log(`Successfully updated Nomicron player count to KV and manifest: ${playerCount}`);
   } else {
     console.log('Player count not found on Nomicron players page.');
   }
@@ -220,7 +273,8 @@ async function updateBlogNomicPlayers(env: Env) {
   if (match && match[1]) {
     const playerCount = parseInt(match[1], 10);
     await env.KV.put('blognomic_players', playerCount.toString());
-    console.log(`Successfully updated BlogNomic player count to KV: ${playerCount}`);
+    await updateManifest(env, 'blognomic', playerCount);
+    console.log(`Successfully updated BlogNomic player count to KV and manifest: ${playerCount}`);
   } else {
     console.log('Player count not found on BlogNomic page.');
   }
