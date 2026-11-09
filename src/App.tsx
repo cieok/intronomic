@@ -338,6 +338,10 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         ? metrics.players
                         : (!isTemplate ? '??' : null);
 
+                      const daysOld = metrics && !metrics.loading && !metrics.error && metrics.lastModified
+                        ? Math.max(0, Math.floor((Date.now() - new Date(metrics.lastModified).getTime()) / (1000 * 60 * 60 * 24)))
+                        : null;
+
                       const gamePrefix = category === 'Games' ? `#${index + 1} ` : '';
 
                       return (
@@ -348,12 +352,18 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         >
                           <div className="nav-item-content" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                             <span className="nav-item-name">{gamePrefix}{ruleset.name}</span>
-                            {!isTemplate && (
-                              <div className="nav-item-meta" style={{ alignSelf: 'flex-end', textAlign: 'right' }}>
+                            <div className="nav-item-meta" style={{ alignSelf: 'flex-end', textAlign: 'right', display: 'flex', gap: '8px', fontSize: '0.8rem' }}>
+                              {daysOld !== null && (
+                                <span title={`Ruleset age: ${daysOld} days old`}>
+                                  🗓️ {daysOld}d
+                                </span>
+                              )}
+                              {!isTemplate && (
                                 <span title={players === '??' ? 'Active players unknown' : `${players} Active Players`}>
-                                  👥 {players}                                </span>
-                              </div>
-                            )}
+                                  👥 {players}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
