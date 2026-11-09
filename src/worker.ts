@@ -30,7 +30,7 @@ export default {
             },
           });
         }
-        return Response.json([], { status: 200 }); // Return empty array if not set yet
+        return Response.json({}, { status: 200 }); // Return empty object if not set yet
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         return Response.json({ error: 'Failed to read manifest from KV', details: errorMessage }, { status: 500 });
@@ -126,33 +126,21 @@ export default {
   },
 };
 
-// --- Helper: Update or append to the 'manifest' KV key using 'id' ---
+// --- Helper: Update or merge into the 'manifest' KV key object ---
 async function updateManifest(env: Env, id: string, playerCount: number) {
-  let manifest: Record<string, { players: number }>[] = [];
+  let manifest: Record<string, { players: number }> = {};
 
   try {
     const existing = await env.KV.get('manifest', { type: 'json' });
-    if (Array.isArray(existing)) {
-      manifest = existing as Record<string, { players: number }>[];
+    if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
+      manifest = existing as Record<string, { players: number }>;
     }
   } catch {
-    manifest = [];
+    manifest = {};
   }
 
-  // Check if an entry for this id already exists in the manifest array
-  let found = false;
-  for (const entry of manifest) {
-    if (entry[id]) {
-      entry[id].players = playerCount;
-      found = true;
-      break;
-    }
-  }
-
-  // If not found, push a new object entry
-  if (!found) {
-    manifest.push({ [id]: { players: playerCount } });
-  }
+  // Update or assign the player count property directly on the object
+  manifest[id] = { players: playerCount };
 
   await env.KV.put('manifest', JSON.stringify(manifest));
 }
