@@ -7,9 +7,11 @@ import {
 } from '../utils/rulesetAnalysis';
 import { getDateColor, formatRelativeAge } from '../utils/dateUtils';
 import { useRulesetData } from '../useRulesetData';
+import { useManifest } from '../useManifest';
 
 export function RulesetAnalysisView() {
   const { rulesets, dataMap } = useRulesetData();
+  const { manifest } = useManifest();
 
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [showRawText, setShowRawText] = useState<boolean>(false);
@@ -40,13 +42,13 @@ export function RulesetAnalysisView() {
   const maxPlayersCount = useMemo(() => {
     let max = 0;
     rulesets.forEach((r) => {
-      const metrics = dataMap[r.id];
-      if (metrics && !metrics.loading && !metrics.error && typeof metrics.players === 'number') {
-        if (metrics.players > max) max = metrics.players;
+      const players = manifest[r.id]?.players;
+      if (typeof players === 'number' && players > max) {
+        max = players;
       }
     });
     return max || 1;
-  }, [rulesets, dataMap]);
+  }, [rulesets, manifest]);
 
   const getScaledSizePct = (words: number) => {
     if (!words || words <= 0) return 0;
@@ -57,14 +59,15 @@ export function RulesetAnalysisView() {
 
   const currentRuleset = rulesets.find((r) => r.id === activeTabId) || null;
   const currentMetrics = currentRuleset ? dataMap[currentRuleset.id] : null;
+  const currentManifest = currentRuleset ? manifest[currentRuleset.id] : undefined;
 
   const dateColor = useMemo(() => {
-    return getDateColor(currentMetrics?.lastModified);
-  }, [currentMetrics?.lastModified]);
+    return getDateColor(currentManifest?.lastModified);
+  }, [currentManifest?.lastModified]);
 
   const relativeAge = useMemo(() => {
-    return formatRelativeAge(currentMetrics?.lastModified);
-  }, [currentMetrics?.lastModified]);
+    return formatRelativeAge(currentManifest?.lastModified);
+  }, [currentManifest?.lastModified]);
 
   const comparisons = useMemo(() => {
     if (!currentRuleset || !currentMetrics || currentMetrics.loading || currentMetrics.error) return [];
@@ -87,7 +90,7 @@ export function RulesetAnalysisView() {
 
         const score = calculateJaccardSimilarity(currentMetrics.wordSet, otherMetrics.wordSet);
         const sizeText = formatSizeComparison(currentMetrics.words, otherMetrics.words);
-        const indicatorColor = getDateColor(otherMetrics.lastModified);
+        const indicatorColor = getDateColor(manifest[other.id]?.lastModified);
 
         return {
           ruleset: other,
@@ -99,7 +102,7 @@ export function RulesetAnalysisView() {
         };
       })
       .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity));
-  }, [currentRuleset, currentMetrics, dataMap, rulesets, similarityFilter]);
+  }, [currentRuleset, currentMetrics, dataMap, rulesets, similarityFilter, manifest]);
 
   const uniqueWordsWithCounts = useMemo(() => {
     if (!currentRuleset || !currentMetrics || currentMetrics.loading || currentMetrics.error) return [];
@@ -281,17 +284,17 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                 {items.map((ruleset, index) => {
                   const isActive = ruleset.id === activeTabId;
                   const isTemplate = ruleset.category === 'Templates';
-                  const metrics = dataMap[ruleset.id];
-                  
-                  const players = !isTemplate && metrics && !metrics.loading && !metrics.error && metrics.players !== null && metrics.players !== undefined
-                    ? metrics.players
+                  const metadata = manifest[ruleset.id];
+
+                  const players = !isTemplate && typeof metadata?.players === 'number'
+                    ? metadata.players
                     : (!isTemplate ? '??' : null);
 
                   const playerNum = typeof players === 'number' ? players : 0;
                   const playerPct = Math.min(100, Math.max(6, (playerNum / maxPlayersCount) * 100));
 
-                  const daysOld = metrics && !metrics.loading && !metrics.error && metrics.lastModified
-                    ? Math.max(0, Math.floor((Date.now() - new Date(metrics.lastModified).getTime()) / (1000 * 60 * 60 * 24)))
+                  const daysOld = metadata?.lastModified
+                    ? Math.max(0, Math.floor((Date.now() - new Date(metadata.lastModified).getTime()) / (1000 * 60 * 60 * 24)))
                     : null;
 
                   const rankNumber = index + 1;
@@ -505,7 +508,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
               </div>
             </div>
 
-            {(relativeAge || (currentMetrics.players !== null && currentMetrics.players !== undefined)) && (
+            {(relativeAge || typeof currentManifest?.players === 'number') && (
               <div className="game-status-banner">
                 {currentRuleset.category !== 'Templates' && relativeAge && (
                   <div className="status-badge-item">
@@ -516,11 +519,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   </div>
                 )}
 
-                {currentMetrics.players !== null && currentMetrics.players !== undefined && (
+                {typeof currentManifest?.players === 'number' && (
                   <div className="status-badge-item">
                     <span className="status-label">Active Players</span>
                     <span className="status-value highlight-value">
-                      👥 {currentMetrics.players} Active Players
+                      👥 {currentManifest.players} Active Players
                     </span>
                   </div>
                 )}
