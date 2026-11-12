@@ -70,17 +70,22 @@ export default {
     // --- Handle Nomicron Rules API route ---
     if (url.pathname.startsWith('/api/nomicron')) {
       try {
-        let finalCleanText = await env.KV.get('nomicron');
+        let nomicronStr = await env.KV.get('nomicron');
 
-        if (finalCleanText === null) {
-          finalCleanText = await fetchAndParseNomicronRules();
-          await env.KV.put('nomicron', finalCleanText);
+        if (nomicronStr === null) {
+          const finalCleanText = await fetchAndParseNomicronRules();
+          const payload = { rules: finalCleanText };
+          await env.KV.put('nomicron', JSON.stringify(payload));
+          nomicronStr = JSON.stringify(payload);
         }
 
-        return new Response(finalCleanText, {
+        // Parse JSON object to return via Response.json or extract rules string depending on preference.
+        // If clients expect pure text or JSON, we can serve it safely:
+        const nomicronData = JSON.parse(nomicronStr);
+
+        return Response.json(nomicronData, {
           status: 200,
           headers: {
-            'Content-Type': 'text/plain; charset=utf-8',
             'Cache-Control': 'public, max-age=3600',
           },
         });
@@ -153,8 +158,9 @@ async function fetchAndParseNomicronRules(): Promise<string> {
 // --- Task Helper: Update Nomicron Rules in KV ---
 async function updateNomicronRules(env: Env) {
   const finalCleanText = await fetchAndParseNomicronRules();
-  await env.KV.put('nomicron', finalCleanText);
-  console.log('Successfully updated Nomicron rules KV under key "nomicron".');
+  const payload = { rules: finalCleanText };
+  await env.KV.put('nomicron', JSON.stringify(payload));
+  console.log('Successfully updated Nomicron rules KV under key "nomicron" with format {"rules": ...}.');
 }
 
 // --- Cron Handler ---
