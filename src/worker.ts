@@ -73,9 +73,10 @@ export default {
         let nomicronStr = await env.KV.get('nomicron');
 
         if (nomicronStr === null) {
-          const finalCleanText = await fetchAndParseNomicronRules();
-          const payload = { rules: finalCleanText };
+          const { text, lastModified } = await fetchAndParseNomicronRules();
+          const payload = { rules: text };
           await env.KV.put('nomicron', JSON.stringify(payload));
+          await updateManifest(env, 'nomicron', { lastModified });
           nomicronStr = JSON.stringify(payload);
         }
 
@@ -99,9 +100,10 @@ export default {
         let agoraRulesStr = await env.KV.get('agora');
 
         if (agoraRulesStr === null) {
-          const { text } = await fetchAndParseAgoraRules();
+          const { text, lastModified } = await fetchAndParseAgoraRules();
           const payload = { rules: text };
           await env.KV.put('agora', JSON.stringify(payload));
+          await updateManifest(env, 'agora', { lastModified });
           agoraRulesStr = JSON.stringify(payload);
         }
 
@@ -125,9 +127,10 @@ export default {
         let blognomicRulesStr = await env.KV.get('blognomic');
 
         if (blognomicRulesStr === null) {
-          const { text } = await fetchAndParseBlogNomicRules();
+          const { text, lastModified } = await fetchAndParseBlogNomicRules();
           const payload = { rules: text };
           await env.KV.put('blognomic', JSON.stringify(payload));
+          await updateManifest(env, 'blognomic', { lastModified });
           blognomicRulesStr = JSON.stringify(payload);
         }
 
@@ -151,9 +154,10 @@ export default {
         let infiniteRulesStr = await env.KV.get('infinite');
 
         if (infiniteRulesStr === null) {
-          const { text } = await fetchAndParseInfiniteNomicRules();
+          const { text, lastModified } = await fetchAndParseInfiniteNomicRules();
           const payload = { rules: text };
           await env.KV.put('infinite', JSON.stringify(payload));
+          await updateManifest(env, 'infinite', { lastModified });
           infiniteRulesStr = JSON.stringify(payload);
         }
 
@@ -209,13 +213,27 @@ async function updateManifest(env: Env, id: string, updates: { players?: number;
 }
 
 // --- Helper: Fetch and parse Nomicron rules ---
-async function fetchAndParseNomicronRules(): Promise<string> {
+async function fetchAndParseNomicronRules(): Promise<{ text: string; lastModified: string | null }> {
   const externalResponse = await fetch('https://nomicron.org/rules/', {
     headers: { 'User-Agent': 'Nomicinfra-App' },
   });
 
   if (!externalResponse.ok) {
     throw new Error(`Upstream HTTP ${externalResponse.status}`);
+  }
+
+  const rawDateString = externalResponse.headers.get('Last-Modified');
+  let lastModified: string | null = null;
+
+  if (rawDateString) {
+    const parsedDate = new Date(rawDateString);
+    if (!isNaN(parsedDate.getTime())) {
+      lastModified = parsedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
   }
 
   const htmlText = await externalResponse.text();
@@ -232,7 +250,8 @@ async function fetchAndParseNomicronRules(): Promise<string> {
     extractedText = htmlText.replace(/<[^>]*>/g, ' ');
   }
 
-  return extractedText.replace(/\s+/g, ' ').trim();
+  const text = extractedText.replace(/\s+/g, ' ').trim();
+  return { text, lastModified };
 }
 
 // --- Helper: Fetch and parse Agora rules from slr.txt ---
@@ -357,10 +376,11 @@ async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string; lastMo
 
 // --- Task Helper: Update Nomicron Rules in KV ---
 async function updateNomicronRules(env: Env) {
-  const finalCleanText = await fetchAndParseNomicronRules();
-  const payload = { rules: finalCleanText };
+  const { text, lastModified } = await fetchAndParseNomicronRules();
+  const payload = { rules: text };
   await env.KV.put('nomicron', JSON.stringify(payload));
-  console.log('Successfully updated Nomicron rules KV under key "nomicron" with format {"rules": ...}.');
+  await updateManifest(env, 'nomicron', { lastModified });
+  console.log(`Successfully updated Nomicron rules KV and manifest lastModified: ${lastModified}`);
 }
 
 // --- Task Helper: Update Agora Rules in KV ---
