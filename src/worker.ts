@@ -99,8 +99,8 @@ export default {
         let agoraRulesStr = await env.KV.get('agora');
 
         if (agoraRulesStr === null) {
-          const rulesText = await fetchAndParseAgoraRules();
-          const payload = { rules: rulesText };
+          const { text } = await fetchAndParseAgoraRules();
+          const payload = { rules: text };
           await env.KV.put('agora', JSON.stringify(payload));
           agoraRulesStr = JSON.stringify(payload);
         }
@@ -136,19 +136,23 @@ export default {
 };
 
 // --- Helper: Update or merge into the 'manifest' KV key object ---
-async function updateManifest(env: Env, id: string, playerCount: number) {
-  let manifest: Record<string, { players: number }> = {};
+async function updateManifest(env: Env, id: string, updates: { players?: number; lastModified?: string | null }) {
+  let manifest: Record<string, { players?: number; lastModified?: string | null }> = {};
 
   try {
     const existing = await env.KV.get('manifest', { type: 'json' });
     if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
-      manifest = existing as Record<string, { players: number }>;
+      manifest = existing as Record<string, { players?: number; lastModified?: string | null }>;
     }
   } catch {
     manifest = {};
   }
 
-  manifest[id] = { players: playerCount };
+  manifest[id] = {
+    ...(manifest[id] || {}),
+    ...updates,
+  };
+  
   await env.KV.put('manifest', JSON.stringify(manifest));
 }
 
@@ -180,7 +184,7 @@ async function fetchAndParseNomicronRules(): Promise<string> {
 }
 
 // --- Helper: Fetch and parse Agora rules from slr.txt ---
-async function fetchAndParseAgoraRules(): Promise<string> {
+async function fetchAndParseAgoraRules(): Promise<{ text: string; lastModified: string | null }> {
   const externalResponse = await fetch('https://agoranomic.org/ruleset/slr.txt', {
     headers: { 'User-Agent': 'Nomicinfra-App' },
   });
@@ -189,8 +193,24 @@ async function fetchAndParseAgoraRules(): Promise<string> {
     throw new Error(`Upstream HTTP ${externalResponse.status}`);
   }
 
-  const text = await externalResponse.text();
-  return text.replace(/\s+/g, ' ').trim();
+  const rawDateString = externalResponse.headers.get('Last-Modified');
+  let lastModified: string | null = null;
+
+  if (rawDateString) {
+    const parsedDate = new Date(rawDateString);
+    if (!isNaN(parsedDate.getTime())) {
+      lastModified = parsedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+  }
+
+  const rawText = await externalResponse.text();
+  const text = rawText.replace(/\s+/g, ' ').trim();
+
+  return { text, lastModified };
 }
 
 // --- Task Helper: Update Nomicron Rules in KV ---
@@ -203,10 +223,13 @@ async function updateNomicronRules(env: Env) {
 
 // --- Task Helper: Update Agora Rules in KV ---
 async function updateAgoraRules(env: Env) {
-  const rulesText = await fetchAndParseAgoraRules();
-  const payload = { rules: rulesText };
+  const { text, lastModified } = await fetchAndParseAgoraRules();
+  const payload = { rules: text };
+  
   await env.KV.put('agora', JSON.stringify(payload));
-  console.log('Successfully updated Agora rules KV under key "agora" with format {"rules": ...}.');
+  await updateManifest(env, 'agora', { lastModified });
+  
+  console.log(`Successfully updated Agora rules KV and manifest lastModified: ${lastModified}`);
 }
 
 // --- Cron Handler ---
@@ -302,7 +325,7 @@ async function updateAgoraPlayers(env: Env) {
   if (playerMatch && playerMatch[1]) {
     const playerCount = parseInt(playerMatch[1], 10);
     await env.KV.put('agora_players', playerCount.toString());
-    await updateManifest(env, 'agora', playerCount);
+    await updateManifest(env, 'agora', { players: playerCount });
     console.log(`Successfully updated Agora player count to KV and manifest: ${playerCount}`);
   } else {
     console.log('Could not find active players count pattern in the weekly report email text.');
@@ -326,7 +349,7 @@ async function updateNomicronPlayers(env: Env) {
   if (match && match[1]) {
     const playerCount = parseInt(match[1], 10);
     await env.KV.put('nomicron_players', playerCount.toString());
-    await updateManifest(env, 'nomicron', playerCount);
+    await updateManifest(env, 'nomicron', { players: playerCount });
     console.log(`Successfully updated Nomicron player count to KV and manifest: ${playerCount}`);
   } else {
     console.log('Player count not found on Nomicron players page.');
@@ -350,7 +373,7 @@ async function updateBlogNomicPlayers(env: Env) {
   if (match && match[1]) {
     const playerCount = parseInt(match[1], 10);
     await env.KV.put('blognomic_players', playerCount.toString());
-    await updateManifest(env, 'blognomic', playerCount);
+    await updateManifest(env, 'blognomic', { players: playerCount });
     console.log(`Successfully updated BlogNomic player count to KV and manifest: ${playerCount}`);
   } else {
     console.log('Player count not found on BlogNomic page.');
