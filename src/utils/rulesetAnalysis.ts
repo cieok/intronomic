@@ -5,7 +5,6 @@ export interface RulesetConfig {
   linkUrl: string;
   homeUrl: string;
   isJsonApi?: boolean;
-  fetchPlayers?: boolean;
 }
 
 export interface MetricData {
@@ -16,9 +15,6 @@ export interface MetricData {
   wordCounts: Map<string, number>;
   loading: boolean;
   error: string | null;
-  lastModified?: string | null;
-  rawDate?: Date | null;
-  players?: number | null;
 }
 
 export const INITIAL_RULESETS: RulesetConfig[] = [
@@ -28,7 +24,6 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     fetchUrl: 'https://agoranomic.org/ruleset/slr.txt',
     linkUrl: 'https://agoranomic.org/ruleset/slr.txt',
     homeUrl: 'https://agoranomic.org/',
-    fetchPlayers: true,
   },
   {
     id: 'nomicron',
@@ -36,7 +31,6 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     fetchUrl: '/api/nomicron',
     linkUrl: 'https://nomicron.org/rules/',
     homeUrl: 'https://nomicron.org/',
-    fetchPlayers: true,
   },
   {
     id: 'blognomic',
@@ -45,7 +39,6 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
     linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
     homeUrl: 'https://blognomic.com/',
     isJsonApi: true,
-    fetchPlayers: true,
   },
   {
     id: 'infinite',
@@ -137,36 +130,11 @@ export function getDistinctTopWords(
   return result;
 }
 
-export function calculateRulesetHealth(date: Date | null | undefined): {
-  percentage: number;
-  color: string;
-  daysAgo: number;
-} | null {
-  if (!date) return null;
-
-  const now = new Date();
-  const diffTime = Math.max(0, now.getTime() - date.getTime());
-  const daysAgo = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  const maxDays = 28;
-  const factor = Math.min(1, daysAgo / maxDays);
-
-  const r = Math.round(34 + (239 - 34) * factor);
-  const g = Math.round(197 - (197 - 68) * factor);
-  const b = Math.round(94 - (94 - 68) * factor);
-
-  const color = `rgb(${r}, ${g}, ${b})`;
-  const percentage = Math.max(0, Math.round((1 - factor) * 100));
-
-  return { percentage, color, daysAgo };
-}
-
 export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricData, 'loading' | 'error'>> {
   const res = await fetch(ruleset.fetchUrl);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
   let text = '';
-  let rawDateString: string | null = null;
 
   if (ruleset.isJsonApi) {
     const json = (await res.json()) as {
@@ -175,7 +143,6 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
           revisions?: Array<{
             slots?: { main?: { '*'?: string } };
             '*'?: string;
-            timestamp?: string;
           }>;
         }>;
       };
@@ -188,39 +155,9 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
       const revision = pageData?.revisions?.[0];
 
       text = revision?.slots?.main?.['*'] || revision?.['*'] || '';
-      rawDateString = revision?.timestamp || null;
     }
   } else {
     text = await res.text();
-    rawDateString = res.headers.get('last-modified');
-  }
-
-  let lastModified: string | null = null;
-  let rawDate: Date | null = null;
-
-  if (rawDateString && ruleset.id !== 'infinite') {
-    const parsedDate = new Date(rawDateString);
-    if (!isNaN(parsedDate.getTime())) {
-      rawDate = parsedDate;
-      lastModified = parsedDate.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-  }
-
-  let players: number | null = null;
-  if (ruleset.fetchPlayers) {
-    try {
-      const playerRes = await fetch(`/api/players?id=${ruleset.id}`);
-      if (playerRes.ok) {
-        const playerData = (await playerRes.json()) as { players?: number };
-        players = playerData.players ?? null;
-      }
-    } catch {
-      players = null;
-    }
   }
 
   const tokens = text
@@ -241,8 +178,5 @@ export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricD
     content: text,
     wordSet: new Set(tokens),
     wordCounts,
-    lastModified,
-    rawDate,
-    players,
   };
 }
