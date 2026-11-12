@@ -70,32 +70,14 @@ export default {
     // --- Handle Nomicron Rules API route ---
     if (url.pathname.startsWith('/api/nomicron')) {
       try {
-        const externalResponse = await fetch('https://nomicron.org/rules/', {
-          headers: { 'User-Agent': 'Nomicinfra-App' },
-        });
+        // Try reading from KV first, populated by the daily cron job
+        let finalCleanText = await env.KV.get('nomicron');
 
-        if (!externalResponse.ok) {
-          return new Response(JSON.stringify({ error: `Upstream HTTP ${externalResponse.status}` }), {
-            status: externalResponse.status,
-            headers: { 'Content-Type': 'application/json' },
-          });
+        if (finalCleanText === null) {
+          // Fallback to live fetch if KV is empty
+          finalCleanText = await fetchAndParseNomicronRules();
+          await env.KV.put('nomicron', finalCleanText);
         }
-
-        const htmlText = await externalResponse.text();
-        const regex = /<div class="rule-card__body[^"]*">([\s\S]*?)<\/div>/g;
-        let match;
-        let extractedText = '';
-
-        while ((match = regex.exec(htmlText)) !== null) {
-          const cleanBlock = match[1].replace(/<[^>]*>/g, ' ');
-          extractedText += cleanBlock + '\n\n';
-        }
-
-        if (!extractedText.trim()) {
-          extractedText = htmlText.replace(/<[^>]*>/g, ' ');
-        }
-
-        const finalCleanText = extractedText.replace(/\s+/g, ' ').trim();
 
         return new Response(finalCleanText, {
           status: 200,
@@ -145,29 +127,68 @@ async function updateManifest(env: Env, id: string, playerCount: number) {
   await env.KV.put('manifest', JSON.stringify(manifest));
 }
 
-// --- Cron Handler: Forks based on day of week (UTC) ---
+// --- Helper: Fetch and parse Nomicron rules ---
+async function fetchAndParseNomicronRules(): Promise<string> {
+  const externalResponse = await fetch('https://nomicron.org/rules/', {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!externalResponse.ok) {
+    throw new Error(`Upstream HTTP ${externalResponse.status}`);
+  }
+
+  const htmlText = await externalResponse.text();
+  const regex = /<div class="rule-card__body[^"]*">([\s\S]*?)<\/div>/g;
+  let match;
+  let extractedText = '';
+
+  while ((match = regex.exec(htmlText)) !== null) {
+    const cleanBlock = match[1].replace(/<[^>]*>/g, ' ');
+    extractedText += cleanBlock + '\n\n';
+  }
+
+  if (!extractedText.trim()) {
+    extractedText = htmlText.replace(/<[^>]*>/g, ' ');
+  }
+
+  return extractedText.replace(/\s+/g, ' ').trim();
+}
+
+// --- Task Helper: Update Nomicron Rules in KV ---
+async function updateNomicronRules(env: Env) {
+  const finalCleanText = await fetchAndParseNomicronRules();
+  await env.KV.put('nomicron', finalCleanText);
+  console.log('Successfully updated Nomicron rules KV under key "nomicron".');
+}
+
+// --- Cron Handler ---
 async function handleCron(env: Env) {
-  const dayOfWeek = new Date().getUTCDay(); 
+  const now = new Date();
+  const currentHour = now.getUTCHours();
+  const dayOfWeek = now.getUTCDay(); 
   // 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
 
   try {
-    // Run Agora update on Fridays (Day 5)
-    if (dayOfWeek === 5) {
-      console.log('Executing Friday task: Agora Players Update');
-      await updateAgoraPlayers(env);
-    } 
-    // Run Nomicron update on Mondays (Day 1)
-    else if (dayOfWeek === 1) {
-      console.log('Executing Monday task: Nomicron Players Update');
-      await updateNomicronPlayers(env);
-    } 
-    // Run BlogNomic update on Wednesdays (Day 3)
-    else if (dayOfWeek === 3) {
-      console.log('Executing Wednesday task: BlogNomic Players Update');
-      await updateBlogNomicPlayers(env);
+    // 1. Run daily Nomicron rules update if hour is 12 UTC
+    if (currentHour === 12) {
+      console.log('Executing Daily task: Nomicron Rules Update (Hour is 12 UTC)');
+      await updateNomicronRules(env);
     }
-    else {
-      console.log(`Cron triggered on day ${dayOfWeek}, but no task is scheduled for today.`);
+
+    // 2. Run weekly scheduled player updates if hour is 0 UTC on matching day
+    if (currentHour === 0) {
+      if (dayOfWeek === 5) {
+        console.log('Executing Friday task: Agora Players Update (Hour is 0 UTC)');
+        await updateAgoraPlayers(env);
+      } 
+      else if (dayOfWeek === 1) {
+        console.log('Executing Monday task: Nomicron Players Update (Hour is 0 UTC)');
+        await updateNomicronPlayers(env);
+      } 
+      else if (dayOfWeek === 3) {
+        console.log('Executing Wednesday task: BlogNomic Players Update (Hour is 0 UTC)');
+        await updateBlogNomicPlayers(env);
+      }
     }
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
