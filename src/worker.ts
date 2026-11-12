@@ -228,11 +228,7 @@ async function fetchAndParseNomicronRules(): Promise<{ text: string; lastModifie
   if (rawDateString) {
     const parsedDate = new Date(rawDateString);
     if (!isNaN(parsedDate.getTime())) {
-      lastModified = parsedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      lastModified = parsedDate.toISOString();
     }
   }
 
@@ -270,11 +266,7 @@ async function fetchAndParseAgoraRules(): Promise<{ text: string; lastModified: 
   if (rawDateString) {
     const parsedDate = new Date(rawDateString);
     if (!isNaN(parsedDate.getTime())) {
-      lastModified = parsedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      lastModified = parsedDate.toISOString();
     }
   }
 
@@ -315,11 +307,7 @@ async function fetchAndParseBlogNomicRules(): Promise<{ text: string; lastModifi
   if (rawDateString) {
     const parsedDate = new Date(rawDateString);
     if (!isNaN(parsedDate.getTime())) {
-      lastModified = parsedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      lastModified = parsedDate.toISOString();
     }
   }
 
@@ -360,11 +348,7 @@ async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string; lastMo
   if (rawDateString) {
     const parsedDate = new Date(rawDateString);
     if (!isNaN(parsedDate.getTime())) {
-      lastModified = parsedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      lastModified = parsedDate.toISOString();
     }
   }
 
