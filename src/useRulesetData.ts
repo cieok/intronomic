@@ -11,7 +11,6 @@ function buildPrecomputedState() {
   const precomputedRulesets: CategorizedRulesetConfig[] = PRECOMPUTED_RULESETS.map((p) => ({
     id: p.id,
     name: p.name,
-    fetchUrl: './',
     linkUrl: p.linkUrl,
     homeUrl: p.homeUrl,
     category: 'Templates',
@@ -100,15 +99,11 @@ export function useRulesetData() {
 
           const lines = rawText.trim().split('\n');
           const linkUrl = lines[0] ? lines[0].trim() : '#';
-          const contentBody = lines.slice(1).join('\n');
 
-          const blob = new Blob([contentBody], { type: 'text/plain' });
-          const objectUrl = URL.createObjectURL(blob);
 
           importedRulesets.push({
             id,
             name,
-            fetchUrl: objectUrl,
             linkUrl,
             homeUrl: '#',
             category: 'Templates',
