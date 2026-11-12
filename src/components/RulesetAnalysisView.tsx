@@ -197,11 +197,9 @@ export function RulesetAnalysisView() {
   }, [topWords, currentRuleset]);
 
   const handleExportTs = () => {
-    const localRulesets = rulesets.filter(
-      (r) => r.fetchUrl.startsWith('./') || r.fetchUrl.startsWith('blob:')
-    );
+    const templateRulesets = rulesets.filter((r) => r.category === 'Templates');
 
-    const exportData = localRulesets.map((r) => {
+    const exportData = templateRulesets.map((r) => {
       const metrics = dataMap[r.id];
       return {
         id: r.id,
@@ -219,7 +217,7 @@ export function RulesetAnalysisView() {
       };
     });
 
-    const tsContent = `// Auto-generated precomputed ruleset data (Local files only)
+    const tsContent = `// Auto-generated precomputed template ruleset data
 export interface PrecomputedRuleset {
   id: string;
   name: string;
@@ -243,7 +241,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'precomputedRulesets.ts';
+    link.download = 'precomputedTemplates.ts';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -320,7 +318,6 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      {/* Rank Number Badge (Only shown for Games, omitted for Templates) */}
                       {!isTemplateCategory ? (
                         <span
                           style={{
@@ -365,7 +362,6 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         </span>
                       )}
 
-                      {/* Name & Mini Progress Bar */}
                       <div className="nav-item-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                         <span
                           className="nav-item-name"
@@ -402,7 +398,6 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         )}
                       </div>
 
-                      {/* Right Meta Column */}
                       <div
                         className="nav-item-meta"
                         style={{
@@ -763,11 +758,13 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
           </div>
         )}
 
-        <div className="export-trigger-container">
-          <button onClick={handleExportTs} aria-label="Export" className="export-trigger-button">
-            .
-          </button>
-        </div>
+        {currentRuleset?.category === 'Templates' && (
+          <div className="export-trigger-container">
+            <button onClick={handleExportTs} aria-label="Export" className="export-trigger-button">
+              .
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

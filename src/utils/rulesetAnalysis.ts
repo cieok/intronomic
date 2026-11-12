@@ -1,10 +1,8 @@
 export interface RulesetConfig {
   id: string;
   name: string;
-  fetchUrl: string;
   linkUrl: string;
   homeUrl: string;
-  isJsonApi?: boolean;
 }
 
 export interface MetricData {
@@ -21,32 +19,26 @@ export const INITIAL_RULESETS: RulesetConfig[] = [
   {
     id: 'agora',
     name: 'Agora Nomic',
-    fetchUrl: 'https://agoranomic.org/ruleset/slr.txt',
     linkUrl: 'https://agoranomic.org/ruleset/slr.txt',
     homeUrl: 'https://agoranomic.org/',
   },
   {
     id: 'nomicron',
     name: 'Nomicron',
-    fetchUrl: '/api/nomicron',
     linkUrl: 'https://nomicron.org/rules/',
     homeUrl: 'https://nomicron.org/',
   },
   {
     id: 'blognomic',
     name: 'BlogNomic',
-    fetchUrl: 'https://wiki.blognomic.com/api.php?action=query&titles=Ruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*',
     linkUrl: 'https://wiki.blognomic.com/index.php?title=Ruleset',
     homeUrl: 'https://blognomic.com/',
-    isJsonApi: true,
   },
   {
     id: 'infinite',
     name: 'Infinite Nomic',
-    fetchUrl: 'https://infinite.nomic.space/wiki/api.php?action=query&titles=Metaruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*',
     linkUrl: 'https://infinite.nomic.space/wiki/index.php?title=Metaruleset',
     homeUrl: 'https://infinite.nomic.space/',
-    isJsonApi: true,
   },
 ];
 
@@ -131,34 +123,11 @@ export function getDistinctTopWords(
 }
 
 export async function fetchMetrics(ruleset: RulesetConfig): Promise<Omit<MetricData, 'loading' | 'error'>> {
-  const res = await fetch(ruleset.fetchUrl);
+  const res = await fetch(`/api/${ruleset.id}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  let text = '';
-
-  if (ruleset.isJsonApi) {
-    const json = (await res.json()) as {
-      query?: {
-        pages?: Record<string, {
-          revisions?: Array<{
-            slots?: { main?: { '*'?: string } };
-            '*'?: string;
-          }>;
-        }>;
-      };
-    };
-    
-    const pages = json?.query?.pages;
-    if (pages) {
-      const pageKey = Object.keys(pages)[0];
-      const pageData = pages[pageKey];
-      const revision = pageData?.revisions?.[0];
-
-      text = revision?.slots?.main?.['*'] || revision?.['*'] || '';
-    }
-  } else {
-    text = await res.text();
-  }
+  const json = (await res.json()) as { rules?: string };
+  const text = json.rules || '';
 
   const tokens = text
     .toLowerCase()
