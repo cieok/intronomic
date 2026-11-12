@@ -145,6 +145,32 @@ export default {
       }
     }
 
+    // --- Handle Infinite Nomic Rules API route ---
+    if (url.pathname.startsWith('/api/infinite')) {
+      try {
+        let infiniteRulesStr = await env.KV.get('infinite');
+
+        if (infiniteRulesStr === null) {
+          const { text } = await fetchAndParseInfiniteNomicRules();
+          const payload = { rules: text };
+          await env.KV.put('infinite', JSON.stringify(payload));
+          infiniteRulesStr = JSON.stringify(payload);
+        }
+
+        const infiniteRulesData = JSON.parse(infiniteRulesStr);
+
+        return Response.json(infiniteRulesData, {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to fetch or parse Infinite Nomic rules', details: errorMessage }, { status: 500 });
+      }
+    }
+
     // 4. Explicitly handle your multi-page entry point from Vite config
     if (url.pathname === '/dice' || url.pathname === '/dice.html') {
       return env.ASSETS.fetch(new Request(new URL('/dice.html', request.url), request));
@@ -284,6 +310,51 @@ async function fetchAndParseBlogNomicRules(): Promise<{ text: string; lastModifi
   return { text, lastModified };
 }
 
+// --- Helper: Fetch and parse Infinite Nomic rules from MediaWiki API ---
+async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string; lastModified: string | null }> {
+  const externalResponse = await fetch('https://infinite.nomic.space/wiki/api.php?action=query&titles=Metaruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*', {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!externalResponse.ok) {
+    throw new Error(`Upstream HTTP ${externalResponse.status}`);
+  }
+
+  const data = (await externalResponse.json()) as any;
+  const pages = data?.query?.pages;
+
+  if (!pages) {
+    throw new Error('Invalid MediaWiki API response structure');
+  }
+
+  const pageId = Object.keys(pages)[0];
+  const page = pages[pageId];
+  const revision = page?.revisions?.[0];
+
+  if (!revision) {
+    throw new Error('No revisions found for Metaruleset on Infinite Nomic wiki');
+  }
+
+  const rawDateString = revision.timestamp;
+  let lastModified: string | null = null;
+
+  if (rawDateString) {
+    const parsedDate = new Date(rawDateString);
+    if (!isNaN(parsedDate.getTime())) {
+      lastModified = parsedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+  }
+
+  const rawText = revision.slots?.main?.['*'] || revision['*'] || '';
+  const text = String(rawText).replace(/\s+/g, ' ').trim();
+
+  return { text, lastModified };
+}
+
 // --- Task Helper: Update Nomicron Rules in KV ---
 async function updateNomicronRules(env: Env) {
   const finalCleanText = await fetchAndParseNomicronRules();
@@ -312,6 +383,17 @@ async function updateBlogNomicRules(env: Env) {
   await updateManifest(env, 'blognomic', { lastModified });
 
   console.log(`Successfully updated BlogNomic rules KV and manifest lastModified: ${lastModified}`);
+}
+
+// --- Task Helper: Update Infinite Nomic Rules in KV ---
+async function updateInfiniteNomicRules(env: Env) {
+  const { text, lastModified } = await fetchAndParseInfiniteNomicRules();
+  const payload = { rules: text };
+
+  await env.KV.put('infinite', JSON.stringify(payload));
+  await updateManifest(env, 'infinite', { lastModified });
+
+  console.log(`Successfully updated Infinite Nomic rules KV and manifest lastModified: ${lastModified}`);
 }
 
 // --- Cron Handler ---
@@ -355,8 +437,8 @@ async function handleCron(env: Env) {
         break;
 
       case 20:
-        console.log('Executing Cron Task for Hour 20 UTC');
-        // TODO: Fill in your slot for Hour 20 here
+        console.log('Executing Cron Task for Hour 20 UTC (Infinite Nomic Rules Update)');
+        await updateInfiniteNomicRules(env);
         break;
 
       default:
