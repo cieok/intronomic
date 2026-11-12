@@ -154,10 +154,9 @@ export default {
         let infiniteRulesStr = await env.KV.get('infinite');
 
         if (infiniteRulesStr === null) {
-          const { text, lastModified } = await fetchAndParseInfiniteNomicRules();
+          const { text } = await fetchAndParseInfiniteNomicRules();
           const payload = { rules: text };
           await env.KV.put('infinite', JSON.stringify(payload));
-          await updateManifest(env, 'infinite', { lastModified });
           infiniteRulesStr = JSON.stringify(payload);
         }
 
@@ -318,7 +317,7 @@ async function fetchAndParseBlogNomicRules(): Promise<{ text: string; lastModifi
 }
 
 // --- Helper: Fetch and parse Infinite Nomic rules from MediaWiki API ---
-async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string; lastModified: string | null }> {
+async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string }> {
   const externalResponse = await fetch('https://infinite.nomic.space/wiki/api.php?action=query&titles=Metaruleset&prop=revisions&rvprop=content|timestamp&rvslots=main&format=json&origin=*', {
     headers: { 'User-Agent': 'Nomicinfra-App' },
   });
@@ -342,20 +341,10 @@ async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string; lastMo
     throw new Error('No revisions found for Metaruleset on Infinite Nomic wiki');
   }
 
-  const rawDateString = revision.timestamp;
-  let lastModified: string | null = null;
-
-  if (rawDateString) {
-    const parsedDate = new Date(rawDateString);
-    if (!isNaN(parsedDate.getTime())) {
-      lastModified = parsedDate.toISOString();
-    }
-  }
-
   const rawText = revision.slots?.main?.['*'] || revision['*'] || '';
   const text = String(rawText).replace(/\s+/g, ' ').trim();
 
-  return { text, lastModified };
+  return { text };
 }
 
 // --- Task Helper: Update Nomicron Rules in KV ---
@@ -391,13 +380,12 @@ async function updateBlogNomicRules(env: Env) {
 
 // --- Task Helper: Update Infinite Nomic Rules in KV ---
 async function updateInfiniteNomicRules(env: Env) {
-  const { text, lastModified } = await fetchAndParseInfiniteNomicRules();
+  const { text } = await fetchAndParseInfiniteNomicRules();
   const payload = { rules: text };
 
   await env.KV.put('infinite', JSON.stringify(payload));
-  await updateManifest(env, 'infinite', { lastModified });
 
-  console.log(`Successfully updated Infinite Nomic rules KV and manifest lastModified: ${lastModified}`);
+  console.log('Successfully updated Infinite Nomic rules KV (omitting manifest update).');
 }
 
 // --- Cron Handler ---
