@@ -79,8 +79,6 @@ export default {
           nomicronStr = JSON.stringify(payload);
         }
 
-        // Parse JSON object to return via Response.json or extract rules string depending on preference.
-        // If clients expect pure text or JSON, we can serve it safely:
         const nomicronData = JSON.parse(nomicronStr);
 
         return Response.json(nomicronData, {
@@ -92,6 +90,32 @@ export default {
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         return Response.json({ error: 'Failed to fetch or parse rules', details: errorMessage }, { status: 500 });
+      }
+    }
+
+    // --- Handle Agora Rules API route ---
+    if (url.pathname.startsWith('/api/agora')) {
+      try {
+        let agoraRulesStr = await env.KV.get('agora');
+
+        if (agoraRulesStr === null) {
+          const rulesText = await fetchAndParseAgoraRules();
+          const payload = { rules: rulesText };
+          await env.KV.put('agora', JSON.stringify(payload));
+          agoraRulesStr = JSON.stringify(payload);
+        }
+
+        const agoraRulesData = JSON.parse(agoraRulesStr);
+
+        return Response.json(agoraRulesData, {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return Response.json({ error: 'Failed to fetch or parse Agora rules', details: errorMessage }, { status: 500 });
       }
     }
 
@@ -155,12 +179,34 @@ async function fetchAndParseNomicronRules(): Promise<string> {
   return extractedText.replace(/\s+/g, ' ').trim();
 }
 
+// --- Helper: Fetch and parse Agora rules from slr.txt ---
+async function fetchAndParseAgoraRules(): Promise<string> {
+  const externalResponse = await fetch('https://agoranomic.org/ruleset/slr.txt', {
+    headers: { 'User-Agent': 'Nomicinfra-App' },
+  });
+
+  if (!externalResponse.ok) {
+    throw new Error(`Upstream HTTP ${externalResponse.status}`);
+  }
+
+  const text = await externalResponse.text();
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 // --- Task Helper: Update Nomicron Rules in KV ---
 async function updateNomicronRules(env: Env) {
   const finalCleanText = await fetchAndParseNomicronRules();
   const payload = { rules: finalCleanText };
   await env.KV.put('nomicron', JSON.stringify(payload));
   console.log('Successfully updated Nomicron rules KV under key "nomicron" with format {"rules": ...}.');
+}
+
+// --- Task Helper: Update Agora Rules in KV ---
+async function updateAgoraRules(env: Env) {
+  const rulesText = await fetchAndParseAgoraRules();
+  const payload = { rules: rulesText };
+  await env.KV.put('agora', JSON.stringify(payload));
+  console.log('Successfully updated Agora rules KV under key "agora" with format {"rules": ...}.');
 }
 
 // --- Cron Handler ---
@@ -194,8 +240,8 @@ async function handleCron(env: Env) {
         break;
 
       case 10:
-        console.log('Executing Cron Task for Hour 10 UTC');
-        // TODO: Fill in your slot for Hour 10 here
+        console.log('Executing Cron Task for Hour 10 UTC (Agora Rules Update)');
+        await updateAgoraRules(env);
         break;
 
       case 15:
