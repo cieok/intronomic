@@ -81,7 +81,7 @@ export default {
 
         // Parse JSON object to return via Response.json or extract rules string depending on preference.
         // If clients expect pure text or JSON, we can serve it safely:
-        const nomicronData = JSON.parse(nomicronStr)['rules'] // this is temporary the ['rules'] will be removed after improving data model in frontend direction
+        const nomicronData = JSON.parse(nomicronStr);
 
         return Response.json(nomicronData, {
           status: 200,
