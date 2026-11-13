@@ -9,7 +9,7 @@ export function ExternalLinks() {
       <div className="resources-grid">
         <div className="resource-item">
           <h3>💬 NomicHub Discord</h3>
-          <p>Join the NomicHub Discord server to chat with players across games, share experiences, and plan new games .</p>
+          <p>Join the NomicHub Discord server to chat with players across games, share experiences, plan new games, and give feedback on this site.</p>
           <a href="https://discord.gg/xCTnRFtxN" target="_blank" rel="noreferrer" className="resource-link">
             Join Discord Server ↗
           </a>
