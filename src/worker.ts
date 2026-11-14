@@ -343,9 +343,26 @@ async function fetchAndParseBlogNomicRules(): Promise<{ text: string; lastModifi
   }
 
   const rawText = revision.slots?.main?.['*'] || revision['*'] || '';
-  const text = String(rawText).replace(/\s+/g, ' ').trim();
+  const text = cleanBlogNomicWikitext(String(rawText));
 
   return { text, lastModified };
+}
+
+// Minimal BlogNomic cleaner: removes only obvious templates, HTML comments, and HTML tags
+export function cleanBlogNomicWikitext(raw: string): string {
+  let text = raw;
+
+  // Remove HTML comments
+  text = text.replace(/<!--[\s\S]*?-->/g, ' ');
+
+  // Remove templates (like {{TOCRight}})
+  text = text.replace(/\{\{[^{}]*\}\}/g, ' ');
+
+  // Remove raw HTML tags (like <div ...> and </div>)
+  text = text.replace(/<\/?\s*[a-zA-Z][^>]*>/g, ' ');
+
+  // Normalize multiple spaces into single spaces
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 // --- Helper: Fetch and parse Infinite Nomic rules from MediaWiki API ---
