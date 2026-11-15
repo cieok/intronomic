@@ -82,7 +82,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
 
     try {
       const playerCountStr = await env.KV.get(kvKey);
-      
+
       if (playerCountStr !== null) {
         const playerCount = parseInt(playerCountStr, 10);
         return Response.json({ players: playerCount }, {
@@ -239,7 +239,7 @@ async function updateManifest(env: Env, id: string, updates: { players?: number;
     ...(manifest[id] || {}),
     ...updates,
   };
-  
+
   await env.KV.put('manifest', JSON.stringify(manifest));
 }
 
@@ -409,10 +409,10 @@ async function updateNomicronRules(env: Env) {
 async function updateAgoraRules(env: Env) {
   const { text, lastModified } = await fetchAndParseAgoraRules();
   const payload = { rules: text };
-  
+
   await env.KV.put('agora', JSON.stringify(payload));
   await updateManifest(env, 'agora', { lastModified });
-  
+
   console.log(`Successfully updated Agora rules KV and manifest lastModified: ${lastModified}`);
 }
 
@@ -538,7 +538,6 @@ async function handleCron(env: Env) {
   try {
     switch (currentHour) {
       case 0:
-        console.log('Executing Cron Task for Hour 0 UTC (Players Update)');
         if (dayOfWeek === 5) {
           console.log('Executing Friday task: Agora Players Update');
           await updateAgoraPlayers(env);
@@ -548,6 +547,8 @@ async function handleCron(env: Env) {
         } else if (dayOfWeek === 3) {
           console.log('Executing Wednesday task: BlogNomic Players Update');
           await updateBlogNomicPlayers(env);
+        } else {
+          console.log(`No scheduled player update task for day ${dayOfWeek} at hour 0 UTC`);
         }
         break;
 
