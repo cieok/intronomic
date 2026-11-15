@@ -665,59 +665,16 @@ export default function Dice(): React.ReactElement {
               {data.diceCount > 1 ? `Final Random Roll (${data.diceCount} Dice)` : 'Final Random Roll'}
             </span>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                gap: '0.75rem',
-                margin: '1rem 0',
-                width: '100%',
-              }}
-            >
+            <div className={styles.diceGrid}>
               {data.diceResults.map((die) => (
-                <div
-                  key={die.dieIndex}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0.75rem 0.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(59, 130, 246, 0.4)',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      opacity: 0.8,
-                      marginBottom: '0.25rem',
-                    }}
-                  >
+                <div key={die.dieIndex} className={styles.dieCard}>
+                  <span className={styles.dieLabel}>
                     Die #{die.dieIndex}
                   </span>
-                  <span
-                    style={{
-                      fontSize: '2.25rem',
-                      fontWeight: 'bold',
-                      color: '#3b82f6',
-                      lineHeight: 1,
-                    }}
-                  >
+                  <span className={styles.dieValue}>
                     {die.finalRandomValue}
                   </span>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      opacity: 0.6,
-                      marginTop: '0.35rem',
-                      fontFamily: 'monospace',
-                    }}
-                  >
+                  <span className={styles.dieHex}>
                     0x{die.usedHexSlice}
                   </span>
                 </div>
@@ -725,31 +682,20 @@ export default function Dice(): React.ReactElement {
             </div>
 
             {data.diceCount > 1 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '1.5rem',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  marginTop: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  borderRadius: '6px',
-                }}
-              >
+              <div className={styles.diceStatsContainer}>
                 <span className={styles.badgeSubtext}>
-                  Sum (Σ): <strong style={{ color: '#60a5fa', fontSize: '1.1rem' }}>{data.totalSum}</strong>
+                  Sum (Σ): <strong className={styles.statHighlight}>{data.totalSum}</strong>
                 </span>
                 <span className={styles.badgeSubtext}>
-                  Product (∏): <strong style={{ color: '#60a5fa', fontSize: '1.1rem' }}>{data.totalProduct}</strong>
+                  Product (∏): <strong className={styles.statHighlight}>{data.totalProduct}</strong>
                 </span>
               </div>
             )}
 
-            <span className={styles.badgeSubtext} style={{ marginTop: '0.75rem' }}>
+            <span className={`${styles.badgeSubtext} ${styles.badgeSubtextSpaced}`}>
               Valid range per die: [{data.min} to {data.max}]
             </span>
+
           </div>
 
           <div className={styles.card}>
@@ -841,9 +787,9 @@ export default function Dice(): React.ReactElement {
                   ))}
                 </div>
 
-                <div className={styles.formulaBlock} style={{ marginTop: '0.75rem' }}>
+                <div className={`${styles.formulaBlock} ${styles.formulaBlockSpaced}`}>
                   <div>Offset Index = X mod N = {die.bigIntValue} mod {data.rangeSpan} = <strong>{die.moduloResult}</strong></div>
-                  <div>Die #{die.dieIndex} Result = Min + Offset = {data.min} + {die.moduloResult} = <strong className={styles.finalHighlight} style={{ color: '#3b82f6' }}>{die.finalRandomValue}</strong></div>
+                  <div>Die #{die.dieIndex} Result = Min + Offset = {data.min} + {die.moduloResult} = <strong className={styles.finalHighlight}>{die.finalRandomValue}</strong></div>
                 </div>
               </div>
             ))}
