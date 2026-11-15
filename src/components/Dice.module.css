@@ -1,9 +1,27 @@
+/* ==========================================================================
+   Base & Layout
+   ========================================================================== */
+
+:root {
+  --bg-color: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-primary: #212529;
+  --text-secondary: #666666;
+  --border-color: #e0e0e0;
+  --primary-color: #0066cc;
+  --primary-light: #339af0;
+  --accent-color: #e0a800;
+  --error-color: #d90429;
+  --badge-bg: #e9ecef;
+}
+
 .container {
   max-width: 720px;
   margin: 0 auto;
   padding: 1.5rem 1rem 2rem 1rem;
   font-family: system-ui, -apple-system, sans-serif;
-  color: #333;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -13,7 +31,7 @@
 }
 
 .backLink {
-  color: #0066cc;
+  color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
@@ -29,20 +47,23 @@
   margin: 0 0 0.5rem 0;
   font-size: 2rem;
   font-weight: 800;
-  color: #212529;
 }
 
 .subtext {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   margin: 0;
   line-height: 1.5;
 }
 
 .subtext a {
-  color: #0066cc;
+  color: var(--primary-color);
   text-decoration: underline;
 }
+
+/* ==========================================================================
+   Nomic Info Card
+   ========================================================================== */
 
 .nomicInfoCard {
   background-color: #f1f8ff;
@@ -70,6 +91,10 @@
   margin-bottom: 0.5rem;
 }
 
+/* ==========================================================================
+   Form & Controls
+   ========================================================================== */
+
 .form {
   display: flex;
   flex-direction: column;
@@ -92,14 +117,12 @@
   flex-direction: column;
   flex: 1;
   gap: 0.25rem;
-  margin-bottom: 0;
 }
 
 .labelRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0;
 }
 
 .label {
@@ -132,12 +155,12 @@
   font-size: 1rem;
   flex: 1;
   background-color: #fff;
-  color: #212529;
+  color: var(--text-primary);
 }
 
 .input:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
@@ -165,9 +188,13 @@
   line-height: 1.4;
 }
 
+/* ==========================================================================
+   Buttons & Actions
+   ========================================================================== */
+
 .button {
   padding: 0.75rem;
-  background-color: #0066cc;
+  background-color: var(--primary-color);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -198,6 +225,10 @@
   background-color: #adb5bd;
 }
 
+/* ==========================================================================
+   Cards & Banners (Deduplicated)
+   ========================================================================== */
+
 .errorCard {
   margin-top: 1rem;
   padding: 1rem;
@@ -213,7 +244,7 @@
   margin-bottom: 2rem;
   padding: 1.25rem;
   background-color: rgba(238, 191, 49, 0.06);
-  border: 2px dashed #e0a800;
+  border: 2px dashed var(--accent-color);
   border-radius: 8px;
   text-align: center;
 }
@@ -223,71 +254,13 @@
 }
 
 .scheduledBadge {
-  background-color: #e0a800;
+  background-color: var(--accent-color);
   color: #fff;
   font-size: 0.75rem;
   font-weight: bold;
   text-transform: uppercase;
   padding: 0.25rem 0.6rem;
   border-radius: 12px;
-}
-
-.scheduledMainText {
-  margin: 0.5rem 0 0.25rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #495057;
-}
-
-.scheduledTimeText {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #212529;
-}
-
-.sectionSpacing {
-  margin: 0.75rem 0 0.5rem 0;
-}
-
-.subSectionSpacing {
-  margin: 0.5rem 0 1rem 0;
-}
-
-.copyUrlRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-  justify-content: center;
-}
-
-.truncatedLink {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-  background: #fff;
-  padding: 0.4rem 0.6rem;
-  border-radius: 4px;
-  border: 1px solid #ced4da;
-}
-
-.copyBtn {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #0066cc;
-  background-color: #e7f5ff;
-  border: 1px solid #a5d8ff;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.copyBtn:hover {
-  background-color: #d0ebff;
 }
 
 .noticeBox {
@@ -321,6 +294,54 @@
   line-height: 1.4;
 }
 
+.sectionSpacing {
+  margin: 0.75rem 0 0.5rem 0;
+}
+
+.subSectionSpacing {
+  margin: 0.5rem 0 1rem 0;
+}
+
+.copyUrlRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  justify-content: center;
+}
+
+.truncatedLink {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  background: #fff;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+}
+
+.copyBtn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  background-color: #e7f5ff;
+  border: 1px solid #a5d8ff;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.copyBtn:hover {
+  background-color: #d0ebff;
+}
+
+/* ==========================================================================
+   Results & Dice Grid Components
+   ========================================================================== */
+
 .resultsContainer {
   margin-top: 1.5rem;
   display: flex;
@@ -347,12 +368,6 @@
   display: block;
 }
 
-.badgeValue {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #1864ab;
-}
-
 .badgeSubtext {
   font-size: 0.85rem;
   color: #495057;
@@ -364,11 +379,77 @@
   display: block;
 }
 
+.diceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.dieCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  background-color: #fff;
+  border: 1px solid #339af0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dieLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1864ab;
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+}
+
+.dieValue {
+  font-size: 2.25rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.dieHex {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-top: 0.35rem;
+  font-family: monospace;
+}
+
+.diceStatsContainer {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border: 1px solid #d0ebff;
+  border-radius: 6px;
+}
+
+.statHighlight {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+/* ==========================================================================
+   Cards, Steps & Verification Details
+   ========================================================================== */
+
 .card {
   background-color: #fff;
   border: 1px solid #dee2e6;
   border-radius: 8px;
   padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .cardTitle {
@@ -376,7 +457,7 @@
   margin-bottom: 0.75rem;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #212529;
+  color: var(--text-primary);
 }
 
 .detailRow {
@@ -439,7 +520,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  color: #212529;
+  color: var(--text-primary);
 }
 
 .formulaBlockSpaced {
@@ -490,7 +571,7 @@
 }
 
 .finalHighlight {
-  color: #0066cc;
+  color: var(--primary-color);
 }
 
 .inlineCode {
@@ -512,67 +593,6 @@
   font-size: 0.8rem;
   word-break: break-all;
   white-space: pre-wrap;
-}
-
-.diceGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0;
-  width: 100%;
-}
-
-.dieCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 0.5rem;
-  background-color: #fff;
-  border: 1px solid #339af0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.dieLabel {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #1864ab;
-  margin-bottom: 0.25rem;
-  font-weight: bold;
-}
-
-.dieValue {
-  font-size: 2.25rem;
-  font-weight: bold;
-  color: #0066cc;
-  line-height: 1;
-}
-
-.dieHex {
-  font-size: 0.7rem;
-  color: #6c757d;
-  margin-top: 0.35rem;
-  font-family: monospace;
-}
-
-.diceStatsContainer {
-  display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #fff;
-  border: 1px solid #d0ebff;
-  border-radius: 6px;
-}
-
-.statHighlight {
-  color: #0066cc;
-  font-size: 1.1rem;
 }
 
 .footer {
