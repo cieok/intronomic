@@ -100,6 +100,43 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
     }
   }
 
+  // --- Update All Player Counts API route: /api/update-players ---
+  if (url.pathname === '/api/update-players') {
+    if (request.method !== 'POST') {
+      return Response.json({ error: 'Method not allowed. Use POST.' }, { status: 405 });
+    }
+
+    const results: Record<string, string> = {};
+
+    try {
+      try {
+        await updateAgoraPlayers(env);
+        results.agora = 'success';
+      } catch (err: unknown) {
+        results.agora = err instanceof Error ? err.message : String(err);
+      }
+
+      try {
+        await updateNomicronPlayers(env);
+        results.nomicron = 'success';
+      } catch (err: unknown) {
+        results.nomicron = err instanceof Error ? err.message : String(err);
+      }
+
+      try {
+        await updateBlogNomicPlayers(env);
+        results.blognomic = 'success';
+      } catch (err: unknown) {
+        results.blognomic = err instanceof Error ? err.message : String(err);
+      }
+
+      return Response.json({ message: 'Player counts update executed', results }, { status: 200 });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      return Response.json({ error: 'Failed to update all player counts', details: errorMessage }, { status: 500 });
+    }
+  }
+
   // --- Handle Nomicron Rules API route ---
   if (url.pathname.startsWith('/api/nomicron')) {
     try {
