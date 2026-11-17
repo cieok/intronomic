@@ -72,7 +72,7 @@ export function App() {
             className={`nav-tab-btn ${currentSection === 'dice' ? 'active' : ''}`}
             onClick={() => navigateToSection('dice')}
           >
-            🎲 NIST Beacon Dice
+            🎲 Trusty Dice
           </button>
           <button
             className={`nav-tab-btn ${currentSection === 'links' ? 'active' : ''}`}
