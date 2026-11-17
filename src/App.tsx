@@ -66,7 +66,7 @@ export function App() {
             className={`nav-tab-btn ${currentSection === 'rulesets' ? 'active' : ''}`}
             onClick={() => navigateToSection('rulesets')}
           >
-            📋 Rulesets & Analysis
+            📋 Games & Templates
           </button>
           <button
             className={`nav-tab-btn ${currentSection === 'dice' ? 'active' : ''}`}
