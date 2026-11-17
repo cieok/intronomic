@@ -42,9 +42,10 @@ export function RulesetAnalysisView() {
   const maxPlayersCount = useMemo(() => {
     let max = 0;
     rulesets.forEach((r) => {
-      const players = manifest[r.id]?.players;
-      if (typeof players === 'number' && players > max) {
-        max = players;
+      const counts = manifest[r.id]?.player_counts;
+      const latestPlayerCount = Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : 0;
+      if (typeof latestPlayerCount === 'number' && latestPlayerCount > max) {
+        max = latestPlayerCount;
       }
     });
     return max || 1;
@@ -60,6 +61,11 @@ export function RulesetAnalysisView() {
   const currentRuleset = rulesets.find((r) => r.id === activeTabId) || null;
   const currentMetrics = currentRuleset ? dataMap[currentRuleset.id] : null;
   const currentManifest = currentRuleset ? manifest[currentRuleset.id] : undefined;
+
+  const currentLatestPlayerCount = useMemo(() => {
+    const counts = currentManifest?.player_counts;
+    return Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : undefined;
+  }, [currentManifest]);
 
   const dateColor = useMemo(() => {
     return getDateColor(currentManifest?.lastModified);
@@ -283,9 +289,10 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   const isActive = ruleset.id === activeTabId;
                   const isTemplate = ruleset.category === 'Templates';
                   const metadata = manifest[ruleset.id];
+                  const counts = metadata?.player_counts;
 
-                  const players = !isTemplate && typeof metadata?.players === 'number'
-                    ? metadata.players
+                  const players = !isTemplate && Array.isArray(counts) && counts.length > 0
+                    ? counts[counts.length - 1]
                     : (!isTemplate ? '??' : null);
 
                   const playerNum = typeof players === 'number' ? players : 0;
@@ -503,7 +510,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
               </div>
             </div>
 
-            {(relativeAge || typeof currentManifest?.players === 'number') && (
+            {(relativeAge || typeof currentLatestPlayerCount === 'number') && (
               <div className="game-status-banner">
                 {currentRuleset.category !== 'Templates' && relativeAge && (
                   <div className="status-badge-item">
@@ -514,11 +521,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   </div>
                 )}
 
-                {typeof currentManifest?.players === 'number' && (
+                {typeof currentLatestPlayerCount === 'number' && (
                   <div className="status-badge-item">
                     <span className="status-label">Active Players</span>
                     <span className="status-value highlight-value">
-                      👥 {currentManifest.players} Active Players
+                      👥 {currentLatestPlayerCount} Active Players
                     </span>
                   </div>
                 )}
