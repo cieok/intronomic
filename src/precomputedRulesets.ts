@@ -16,6 +16,40 @@ export interface PrecomputedRuleset {
 
 export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = [
   {
+    "id": "purenomic",
+    "name": "Pure Nomic",
+    "linkUrl": "https://brightestbulb.net/games/pure_nomic/",
+    "homeUrl": "#",
+    "content": "All players must agree to any changes to the game",
+    "metrics": {
+      "words": 10,
+      "characters": 49,
+      "uniqueWordCount": 9,
+      "wordSet": [
+        "all",
+        "players",
+        "must",
+        "agree",
+        "to",
+        "any",
+        "changes",
+        "the",
+        "game"
+      ],
+      "wordCounts": {
+        "all": 1,
+        "players": 1,
+        "must": 1,
+        "agree": 1,
+        "to": 2,
+        "any": 1,
+        "changes": 1,
+        "the": 1,
+        "game": 1
+      }
+    }
+  },
+  {
     "id": "nomini",
     "name": "Nomini",
     "linkUrl": "https://crowsworthy.itch.io/nomini",
@@ -1576,40 +1610,6 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = [
         "legal": 1,
         "illegal": 1,
         "unable": 1
-      }
-    }
-  },
-  {
-    "id": "purenomic",
-    "name": "Pure Nomic",
-    "linkUrl": "https://brightestbulb.net/games/pure_nomic/",
-    "homeUrl": "#",
-    "content": "All players must agree to any changes to the game",
-    "metrics": {
-      "words": 10,
-      "characters": 49,
-      "uniqueWordCount": 9,
-      "wordSet": [
-        "all",
-        "players",
-        "must",
-        "agree",
-        "to",
-        "any",
-        "changes",
-        "the",
-        "game"
-      ],
-      "wordCounts": {
-        "all": 1,
-        "players": 1,
-        "must": 1,
-        "agree": 1,
-        "to": 2,
-        "any": 1,
-        "changes": 1,
-        "the": 1,
-        "game": 1
       }
     }
   },
