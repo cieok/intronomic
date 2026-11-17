@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './main.css';
 import Dice from './components/Dice';
 import ExternalLinks from './components/ExternalLinks';
 import { RulesetAnalysisView } from './components/RulesetAnalysisView';
