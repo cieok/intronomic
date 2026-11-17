@@ -976,3 +976,248 @@
   font-weight: 600;
   font-size: 0.9rem;
 }
+
+/* ==========================================================================
+   Sidebar & Navigation Styles (Added from React Component)
+   ========================================================================== */
+
+.nav-group {
+  margin-bottom: 1.25rem;
+}
+
+.group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary, #888);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.nav-item.active {
+  background-color: rgba(0, 119, 182, 0.1);
+  border-color: var(--primary-color, #0077b6);
+}
+
+.nav-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: monospace;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary, #666);
+}
+
+.nav-item.active .nav-rank-badge {
+  background-color: var(--primary-color, #0077b6);
+  color: #ffffff;
+}
+
+.nav-template-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--text-secondary, #666);
+}
+
+.nav-item.active .nav-template-badge {
+  background-color: rgba(0, 119, 182, 0.15);
+  color: var(--primary-color, #0077b6);
+}
+
+.nav-item-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-item-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-item.active .nav-item-name {
+  font-weight: 600;
+}
+
+.nav-item-progress-track {
+  width: 100%;
+  height: 2px;
+  background-color: rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.nav-item-progress-fill {
+  height: 100%;
+  background-color: #adb5bd;
+}
+
+.nav-item.active .nav-item-progress-fill {
+  background-color: var(--primary-color, #0077b6);
+}
+
+.nav-item-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  gap: 1px;
+}
+
+.nav-player-count {
+  font-weight: 600;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.nav-trend-icon {
+  font-size: 0.65rem;
+}
+
+.nav-days-old {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #888);
+}
+
+/* Error and Header Specific Additions */
+
+.error-title {
+  color: #d90429;
+  margin-bottom: 0.75rem;
+}
+
+.error-text {
+  margin-bottom: 1.25rem;
+  color: var(--text-secondary, #666);
+}
+
+.error-footer-text {
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.error-link {
+  color: #0077b6;
+  text-decoration: underline;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.title-primary {
+  /* Inherits existing heading styles */
+}
+
+.aka-subtitle {
+  /* Subtitle styles */
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.header-links {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.external-link {
+  color: var(--brand-blue);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title {
+  margin: 0;
+}
+
+.phrase-length-group {
+  align-items: center;
+  gap: 8px;
+}
+
+.phrase-length-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+}
+
+.phrase-length-input {
+  width: 56px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color, #ccc);
+  font-size: 0.85rem;
+  textAlign: center;
+}
+
+.similarity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.similarity-header-title {
+  margin: 0;
+}
+
+.comparison-size-container {
+  margin-top: 6px;
+}
+
+.comparison-sub-track {
+  height: 4px;
+  margin-top: 4px;
+}

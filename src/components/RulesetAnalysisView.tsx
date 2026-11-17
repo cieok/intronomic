@@ -296,22 +296,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
           const isTemplateCategory = category === 'Templates';
 
           return (
-            <div key={category} className="nav-group" style={{ marginBottom: '1.25rem' }}>
-              <div
-                className="group-label"
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--text-secondary, #888)',
-                  padding: '4px 8px',
-                  marginBottom: '4px',
-                }}
-              >
+            <div key={category} className="nav-group">
+              <div className="group-label">
                 {category}
               </div>
-              <div className="nav-list" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div className="nav-list">
                 {items.map((ruleset, index) => {
                   const isActive = ruleset.id === activeTabId;
                   const isTemplate = ruleset.category === 'Templates';
@@ -336,125 +325,45 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                       key={ruleset.id}
                       onClick={() => setActiveTabId(ruleset.id)}
                       className={`nav-item ${isActive ? 'active' : ''}`}
-                      style={{
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        width: '100%',
-                        padding: '6px 8px',
-                        borderRadius: '6px',
-                        backgroundColor: isActive ? 'rgba(0, 119, 182, 0.1)' : 'transparent',
-                        border: '1px solid',
-                        borderColor: isActive ? 'var(--primary-color, #0077b6)' : 'transparent',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.15s ease',
-                      }}
                     >
                       {!isTemplateCategory ? (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            minWidth: '24px',
-                            height: '22px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            fontFamily: 'monospace',
-                            borderRadius: '4px',
-                            backgroundColor: isActive
-                              ? 'var(--primary-color, #0077b6)'
-                              : index === 0
-                              ? '#2b2d42'
-                              : index === 1
-                              ? '#4a4e69'
-                              : index === 2
-                              ? '#6c757d'
-                              : 'rgba(0,0,0,0.06)',
-                            color: isActive || index < 3 ? '#ffffff' : 'var(--text-secondary, #666)',
-                          }}
-                        >
+                        <span className="nav-rank-badge">
                           #{rankNumber}
                         </span>
                       ) : (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            minWidth: '24px',
-                            height: '22px',
-                            fontSize: '0.75rem',
-                            borderRadius: '4px',
-                            backgroundColor: isActive ? 'rgba(0, 119, 182, 0.15)' : 'rgba(0,0,0,0.04)',
-                            color: isActive ? 'var(--primary-color, #0077b6)' : 'var(--text-secondary, #666)',
-                          }}
-                        >
+                        <span className="nav-template-badge">
                           📄
                         </span>
                       )}
 
-                      <div className="nav-item-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                        <span
-                          className="nav-item-name"
-                          style={{
-                            fontSize: '0.85rem',
-                            fontWeight: isActive ? 600 : 500,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
+                      <div className="nav-item-content">
+                        <span className="nav-item-name">
                           {ruleset.name}
                         </span>
 
                         {!isTemplate && (
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '2px',
-                              backgroundColor: 'rgba(0,0,0,0.06)',
-                              borderRadius: '2px',
-                              marginTop: '3px',
-                              overflow: 'hidden',
-                            }}
-                          >
+                          <div className="nav-item-progress-track">
                             <div
-                              style={{
-                                width: `${playerPct}%`,
-                                height: '100%',
-                                backgroundColor: isActive ? 'var(--primary-color, #0077b6)' : '#adb5bd',
-                              }}
+                              className="nav-item-progress-fill"
+                              style={{ width: `${playerPct}%` }}
                             />
                           </div>
                         )}
                       </div>
 
-                      <div
-                        className="nav-item-meta"
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'flex-end',
-                          fontSize: '0.75rem',
-                          lineHeight: '1.2',
-                          gap: '1px',
-                        }}
-                      >
+                      <div className="nav-item-meta">
                         {!isTemplate && (
                           <span
-                            style={{ fontWeight: 600, fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            className="nav-player-count"
                             title={playersDisplay === '??' ? 'Active players unknown' : `${playersDisplay} Active Players`}
                           >
                             {playersDisplay}
-                            {trendIcon && <span style={{ fontSize: '0.65rem' }} title={trendTitle}>{trendIcon}</span>}
+                            {trendIcon && <span className="nav-trend-icon" title={trendTitle}>{trendIcon}</span>}
                           </span>
                         )}
                         {daysOld !== null && (
                           <span
-                            style={{ fontSize: '0.65rem', color: 'var(--text-secondary, #888)' }}
+                            className="nav-days-old"
                             title={`Ruleset age: ${daysOld} days old`}
                           >
                             {daysOld}d
@@ -479,23 +388,18 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
         ) : !currentMetrics || currentMetrics.loading ? (
           <p>Loading ruleset data...</p>
         ) : currentMetrics.error ? (
-          <div className="card error-card" style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}>
-            <h3 style={{ color: '#d90429', marginBottom: '0.75rem' }}>Error Loading {currentRuleset.name}</h3>
-            <p className="error-text" style={{ marginBottom: '1.25rem', color: 'var(--text-secondary, #666)' }}>
+          <div className="card error-card">
+            <h3 className="error-title">Error Loading {currentRuleset.name}</h3>
+            <p className="error-text">
               {currentMetrics.error}
             </p>
-            <p style={{ marginBottom: '1rem', lineHeight: '1.5' }}>
+            <p className="error-footer-text">
               Sorry for the error. Please visit the new frontend on{' '}
               <a
                 href="https://www.intronomic.workers.dev/"
                 target="_blank"
                 rel="noreferrer"
-                style={{
-                  color: '#0077b6',
-                  textDecoration: 'underline',
-                  fontWeight: 600,
-                  wordBreak: 'break-all',
-                }}
+                className="error-link"
               >
                 https://www.intronomic.workers.dev/ ↗
               </a>
@@ -560,8 +464,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
 
             <div className="card">
               <div className="section-header similarity-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h3 style={{ margin: 0 }}>Top Phrases in Ruleset</h3>
+                <div className="section-title-group">
+                  <h3 className="section-title">Top Phrases in Ruleset</h3>
                   <button
                     onClick={() => setShowTopWordsHelp(!showTopWordsHelp)}
                     className="help-button"
@@ -571,8 +475,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   </button>
                 </div>
 
-                <div className="similarity-filter-group" style={{ alignItems: 'center', gap: '8px' }}>
-                  <label htmlFor="phrase-length-input" style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #666)' }}>
+                <div className="similarity-filter-group phrase-length-group">
+                  <label htmlFor="phrase-length-input" className="phrase-length-label">
                     Phrase length (words):
                   </label>
                   <input
@@ -586,14 +490,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                       setPhraseLength(isNaN(val) || val < 1 ? 1 : val);
                       setSelectedTopWord(null);
                     }}
-                    style={{
-                      width: '56px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--border-color, #ccc)',
-                      fontSize: '0.85rem',
-                      textAlign: 'center',
-                    }}
+                    className="phrase-length-input"
                   />
                 </div>
               </div>
@@ -651,7 +548,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
               <div className="metric-card">
                 <div className="metric-label">Ruleset size</div>
                 <div className="metric-value">{currentMetrics.words.toLocaleString()} words</div>
-                <div className="progress-bar-track size-bar-track" style={{ marginTop: '8px' }}>
+                <div className="progress-bar-track size-bar-track">
                   <div
                     className="progress-bar-fill size-bar-fill"
                     style={{
@@ -727,9 +624,9 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                         )}
 
                         {score !== null && sizeText !== null && (
-                          <div style={{ marginTop: '6px' }}>
+                          <div className="comparison-size-container">
                             <div className="comparison-size">Size: {sizeText} ({otherWords.toLocaleString()} words)</div>
-                            <div className="progress-bar-track size-bar-track" style={{ height: '4px', marginTop: '4px' }}>
+                            <div className="progress-bar-track size-bar-track comparison-sub-track">
                               <div
                                 className="progress-bar-fill size-bar-fill"
                                 style={{
@@ -750,8 +647,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
             </div>
 
             <div className="card">
-              <div className="section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h3 style={{ margin: 0 }}>Unique Words in Ruleset</h3>
+              <div className="section-header unique-words-header">
+                <h3 className="section-title">Unique Words in Ruleset</h3>
                 <button
                   onClick={() => setShowUniqueWordsHelp(!showUniqueWordsHelp)}
                   className="help-button"
