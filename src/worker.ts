@@ -107,7 +107,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
 
       if (nomicronStr === null) {
         const { text, lastModified } = await fetchAndParseNomicronRules();
-        const payload = { rules: text };
+        const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
         await env.KV.put('nomicron', JSON.stringify(payload));
         await updateManifest(env, 'nomicron', { lastModified });
         nomicronStr = JSON.stringify(payload);
@@ -134,7 +134,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
 
       if (agoraRulesStr === null) {
         const { text, lastModified } = await fetchAndParseAgoraRules();
-        const payload = { rules: text };
+        const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
         await env.KV.put('agora', JSON.stringify(payload));
         await updateManifest(env, 'agora', { lastModified });
         agoraRulesStr = JSON.stringify(payload);
@@ -161,7 +161,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
 
       if (blognomicRulesStr === null) {
         const { text, lastModified } = await fetchAndParseBlogNomicRules();
-        const payload = { rules: text };
+        const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
         await env.KV.put('blognomic', JSON.stringify(payload));
         await updateManifest(env, 'blognomic', { lastModified });
         blognomicRulesStr = JSON.stringify(payload);
@@ -188,7 +188,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
 
       if (infiniteRulesStr === null) {
         const { text } = await fetchAndParseInfiniteNomicRules();
-        const payload = { rules: text };
+        const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
         await env.KV.put('infinite', JSON.stringify(payload));
         infiniteRulesStr = JSON.stringify(payload);
       }
@@ -399,7 +399,7 @@ async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string }> {
 // --- Task Helper: Update Nomicron Rules in KV ---
 async function updateNomicronRules(env: Env) {
   const { text, lastModified } = await fetchAndParseNomicronRules();
-  const payload = { rules: text };
+  const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
   await env.KV.put('nomicron', JSON.stringify(payload));
   await updateManifest(env, 'nomicron', { lastModified });
   console.log(`Successfully updated Nomicron rules KV and manifest lastModified: ${lastModified}`);
@@ -408,7 +408,7 @@ async function updateNomicronRules(env: Env) {
 // --- Task Helper: Update Agora Rules in KV ---
 async function updateAgoraRules(env: Env) {
   const { text, lastModified } = await fetchAndParseAgoraRules();
-  const payload = { rules: text };
+  const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
 
   await env.KV.put('agora', JSON.stringify(payload));
   await updateManifest(env, 'agora', { lastModified });
@@ -419,7 +419,7 @@ async function updateAgoraRules(env: Env) {
 // --- Task Helper: Update BlogNomic Rules in KV ---
 async function updateBlogNomicRules(env: Env) {
   const { text, lastModified } = await fetchAndParseBlogNomicRules();
-  const payload = { rules: text };
+  const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
 
   await env.KV.put('blognomic', JSON.stringify(payload));
   await updateManifest(env, 'blognomic', { lastModified });
@@ -430,7 +430,7 @@ async function updateBlogNomicRules(env: Env) {
 // --- Task Helper: Update Infinite Nomic Rules in KV ---
 async function updateInfiniteNomicRules(env: Env) {
   const { text } = await fetchAndParseInfiniteNomicRules();
-  const payload = { rules: text };
+  const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
 
   await env.KV.put('infinite', JSON.stringify(payload));
 
