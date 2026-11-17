@@ -70,10 +70,10 @@ export function RulesetAnalysisView() {
   let currentTrendTitle = 'Stagnant (no change)';
   if (typeof currentLatestPlayerCount === 'number' && typeof currentPrevPlayerCount === 'number') {
     if (currentLatestPlayerCount > currentPrevPlayerCount) {
-      currentTrendIcon = '📈';
+      currentTrendIcon = '⬆️';
       currentTrendTitle = `Growing (up from ${currentPrevPlayerCount})`;
     } else if (currentLatestPlayerCount < currentPrevPlayerCount) {
-      currentTrendIcon = '📉';
+      currentTrendIcon = '⬇️';
       currentTrendTitle = `Shrinking (down from ${currentPrevPlayerCount})`;
     } else {
       currentTrendIcon = '➡️';
@@ -312,10 +312,10 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   let trendTitle = 'Stagnant (no change)';
                   if (typeof latestPlayers === 'number' && typeof previousPlayers === 'number') {
                     if (latestPlayers > previousPlayers) {
-                      trendIcon = '📈';
+                      trendIcon = '⬆️';
                       trendTitle = `Growing (up from ${previousPlayers})`;
                     } else if (latestPlayers < previousPlayers) {
-                      trendIcon = '📉';
+                      trendIcon = '⬇️';
                       trendTitle = `Shrinking (down from ${previousPlayers})`;
                     } else {
                       trendIcon = '➡️';
@@ -450,8 +450,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                             style={{ fontWeight: 600, fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '3px' }}
                             title={playersDisplay === '??' ? 'Active players unknown' : `${playersDisplay} Active Players`}
                           >
-                            {trendIcon && <span style={{ fontSize: '0.65rem' }} title={trendTitle}>{trendIcon}</span>}
                             {playersDisplay}
+                            {trendIcon && <span style={{ fontSize: '0.65rem' }} title={trendTitle}>{trendIcon}</span>}
                           </span>
                         )}
                         {daysOld !== null && (
