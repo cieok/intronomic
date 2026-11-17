@@ -64,22 +64,37 @@ export function RulesetAnalysisView() {
 
   const currentCounts = currentManifest?.player_counts;
   const currentLatestPlayerCount = Array.isArray(currentCounts) && currentCounts.length > 0 ? currentCounts[currentCounts.length - 1] : undefined;
-  const currentPrevPlayerCount = Array.isArray(currentCounts) && currentCounts.length > 1 ? currentCounts[currentCounts.length - 2] : undefined;
-
-  let currentTrendIcon = '';
-  let currentTrendTitle = 'Stagnant (no change)';
-  if (typeof currentLatestPlayerCount === 'number' && typeof currentPrevPlayerCount === 'number') {
-    if (currentLatestPlayerCount > currentPrevPlayerCount) {
-      currentTrendIcon = '⬆️';
-      currentTrendTitle = `Growing (up from ${currentPrevPlayerCount})`;
-    } else if (currentLatestPlayerCount < currentPrevPlayerCount) {
-      currentTrendIcon = '⬇️';
-      currentTrendTitle = `Shrinking (down from ${currentPrevPlayerCount})`;
-    } else {
-      currentTrendIcon = '➡️';
-      currentTrendTitle = 'Stagnant (unchanged)';
+  
+  // Helper to determine trend based on the array of counts
+  const getTrendInfo = (counts?: number[]) => {
+    if (!Array.isArray(counts) || counts.length === 0) return { icon: '', title: '' };
+    const latest = counts[counts.length - 1];
+    
+    if (counts.length === 1) {
+      return { icon: '', title: `Current count: ${latest}` };
     }
-  }
+
+    const first = counts[0];
+    const prev = counts[counts.length - 2];
+
+    // Check if first and last are equal, but something different happened in between
+    const hasFluctuated = counts.length > 2 && counts.some(c => c !== first);
+
+    if (latest > prev) {
+      return { icon: '🌱', title: `Growing (up from ${prev}, history: [${counts.join(', ')}])` };
+    } else if (latest < prev) {
+      return { icon: '🔻', title: `Shrinking (down from ${prev}, history: [${counts.join(', ')}])` };
+    } else {
+      // Latest equals previous
+      if (hasFluctuated && latest === first) {
+        return { icon: '〰️', title: `Fluctuated in the middle (history: [${counts.join(', ')}])` };
+      } else {
+        return { icon: '➖', title: `Stagnant / Unchanged (history: [${counts.join(', ')}])` };
+      }
+    }
+  };
+
+  const { icon: currentTrendIcon, title: currentTrendTitle } = getTrendInfo(currentCounts);
 
   const dateColor = useMemo(() => {
     return getDateColor(currentManifest?.lastModified);
@@ -306,22 +321,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   const counts = metadata?.player_counts;
 
                   const latestPlayers = !isTemplate && Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : null;
-                  const previousPlayers = !isTemplate && Array.isArray(counts) && counts.length > 1 ? counts[counts.length - 2] : null;
-
-                  let trendIcon = '';
-                  let trendTitle = 'Stagnant (no change)';
-                  if (typeof latestPlayers === 'number' && typeof previousPlayers === 'number') {
-                    if (latestPlayers > previousPlayers) {
-                      trendIcon = '⬆️';
-                      trendTitle = `Growing (up from ${previousPlayers})`;
-                    } else if (latestPlayers < previousPlayers) {
-                      trendIcon = '⬇️';
-                      trendTitle = `Shrinking (down from ${previousPlayers})`;
-                    } else {
-                      trendIcon = '➡️';
-                      trendTitle = 'Stagnant (unchanged)';
-                    }
-                  }
+                  const { icon: trendIcon, title: trendTitle } = getTrendInfo(counts);
 
                   const playersDisplay = latestPlayers !== null ? latestPlayers : (!isTemplate ? '??' : null);
                   const playerNum = latestPlayers !== null ? latestPlayers : 0;
