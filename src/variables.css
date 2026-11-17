@@ -1,0 +1,49 @@
+:root {
+  /* Core Surfaces & Backgrounds */
+  --bg-color: #f8f9fa;
+  --surface-subtle: #f8fafc;
+  --surface-muted: #f1f5f9;
+  --card-bg: #ffffff;
+
+  /* Typography & Text */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: monospace;
+  --text-primary: #212529;
+  --text-heading: #1e293b;
+  --text-body: #334155;
+  --text-secondary: #666666;
+  --text-muted: #64748b;
+
+  /* Borders */
+  --border-color: #e0e0e0;
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-input: #ced4da;
+
+  /* Brand & Interactive Colors */
+  --primary-color: #0066cc;
+  --primary-hover: #0052a3;
+  --primary-light: #339af0;
+  --brand-blue: #2563eb;
+  --brand-blue-dark: #1d4ed8;
+  --brand-blue-tint: #eff6ff;
+  --brand-blue-border: #bfdbfe;
+  --discord-color: #5865F2;
+  --discord-hover: #4752C4;
+
+  /* Status & Accents */
+  --accent-color: #e0a800;
+  --error-color: #d90429;
+  --error-text: #dc2626;
+  --error-bg: #f8d7da;
+  --error-border: #f5c6cb;
+  --success-color: #2b8a3e;
+  --success-bg: #d3f9d8;
+  --badge-bg: #e9ecef;
+
+  /* Layout & Radii */
+  --container-max-width: 1200px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
