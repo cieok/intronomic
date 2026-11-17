@@ -222,22 +222,30 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
   return env.ASSETS.fetch(new Request(new URL('/index.html', request.url), request));
 }
 
-// --- Helper: Update or merge into the 'manifest' KV key object ---
+// --- Helper: Update or merge into the 'manifest' KV key object (storing last 4 player counts under player_counts) ---
 async function updateManifest(env: Env, id: string, updates: { players?: number; lastModified?: string | null }) {
-  let manifest: Record<string, { players?: number; lastModified?: string | null }> = {};
+  let manifest: Record<string, { players?: number; player_counts?: number[]; lastModified?: string | null }> = {};
 
   try {
     const existing = await env.KV.get('manifest', { type: 'json' });
     if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
-      manifest = existing as Record<string, { players?: number; lastModified?: string | null }>;
+      manifest = existing as Record<string, { players?: number; player_counts?: number[]; lastModified?: string | null }>;
     }
   } catch {
     manifest = {};
   }
 
+  const existingEntry = manifest[id] || {};
+  let playerCountsArray = existingEntry.player_counts || [];
+
+  if (updates.players !== undefined) {
+    playerCountsArray = [...playerCountsArray, updates.players].slice(-4);
+  }
+
   manifest[id] = {
-    ...(manifest[id] || {}),
+    ...existingEntry,
     ...updates,
+    ...(playerCountsArray.length > 0 ? { player_counts: playerCountsArray } : {}),
   };
 
   await env.KV.put('manifest', JSON.stringify(manifest));
