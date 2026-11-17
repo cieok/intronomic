@@ -77,7 +77,6 @@ export function RulesetAnalysisView() {
     const first = counts[0];
     const prev = counts[counts.length - 2];
 
-    // Check if first and last are equal, but something different happened in between
     const hasFluctuated = counts.length > 2 && counts.some(c => c !== first);
 
     if (latest > prev) {
@@ -85,7 +84,6 @@ export function RulesetAnalysisView() {
     } else if (latest < prev) {
       return { icon: '🔻', title: `Shrinking (down from ${prev}, history: [${counts.join(', ')}])` };
     } else {
-      // Latest equals previous
       if (hasFluctuated && latest === first) {
         return { icon: '〰️', title: `Fluctuated in the middle (history: [${counts.join(', ')}])` };
       } else {
@@ -476,9 +474,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
         {!activeTabId || !currentRuleset ? (
           <div className="card welcome-card">
             <h2>Welcome to NomicHub</h2>
-            <p>Select a game or template from the left sidebar to compare nomic rulesets across games and templates.</p>
-            <p>Try the "NIST Beacon Dice" tab to generate cryptographically verifiable random numbers and simulate dice rolls.</p>
-            <p>Visit the "External Resources" tab for deeper documentation, community leaderboards, and infrastructure.</p>
+            <p>Select any game from the sidebar to dive in. Try out <strong>Trusty Dice</strong> for a quick roll, or check out <strong>External Resources</strong> to explore further.</p>
           </div>
         ) : !currentMetrics || currentMetrics.loading ? (
           <p>Loading ruleset data...</p>
