@@ -62,10 +62,24 @@ export function RulesetAnalysisView() {
   const currentMetrics = currentRuleset ? dataMap[currentRuleset.id] : null;
   const currentManifest = currentRuleset ? manifest[currentRuleset.id] : undefined;
 
-  const currentLatestPlayerCount = useMemo(() => {
-    const counts = currentManifest?.player_counts;
-    return Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : undefined;
-  }, [currentManifest]);
+  const currentCounts = currentManifest?.player_counts;
+  const currentLatestPlayerCount = Array.isArray(currentCounts) && currentCounts.length > 0 ? currentCounts[currentCounts.length - 1] : undefined;
+  const currentPrevPlayerCount = Array.isArray(currentCounts) && currentCounts.length > 1 ? currentCounts[currentCounts.length - 2] : undefined;
+
+  let currentTrendIcon = '';
+  let currentTrendTitle = 'Stagnant (no change)';
+  if (typeof currentLatestPlayerCount === 'number' && typeof currentPrevPlayerCount === 'number') {
+    if (currentLatestPlayerCount > currentPrevPlayerCount) {
+      currentTrendIcon = '📈';
+      currentTrendTitle = `Growing (up from ${currentPrevPlayerCount})`;
+    } else if (currentLatestPlayerCount < currentPrevPlayerCount) {
+      currentTrendIcon = '📉';
+      currentTrendTitle = `Shrinking (down from ${currentPrevPlayerCount})`;
+    } else {
+      currentTrendIcon = '➡️';
+      currentTrendTitle = 'Stagnant (unchanged)';
+    }
+  }
 
   const dateColor = useMemo(() => {
     return getDateColor(currentManifest?.lastModified);
@@ -291,11 +305,26 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   const metadata = manifest[ruleset.id];
                   const counts = metadata?.player_counts;
 
-                  const players = !isTemplate && Array.isArray(counts) && counts.length > 0
-                    ? counts[counts.length - 1]
-                    : (!isTemplate ? '??' : null);
+                  const latestPlayers = !isTemplate && Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : null;
+                  const previousPlayers = !isTemplate && Array.isArray(counts) && counts.length > 1 ? counts[counts.length - 2] : null;
 
-                  const playerNum = typeof players === 'number' ? players : 0;
+                  let trendIcon = '';
+                  let trendTitle = 'Stagnant (no change)';
+                  if (typeof latestPlayers === 'number' && typeof previousPlayers === 'number') {
+                    if (latestPlayers > previousPlayers) {
+                      trendIcon = '📈';
+                      trendTitle = `Growing (up from ${previousPlayers})`;
+                    } else if (latestPlayers < previousPlayers) {
+                      trendIcon = '📉';
+                      trendTitle = `Shrinking (down from ${previousPlayers})`;
+                    } else {
+                      trendIcon = '➡️';
+                      trendTitle = 'Stagnant (unchanged)';
+                    }
+                  }
+
+                  const playersDisplay = latestPlayers !== null ? latestPlayers : (!isTemplate ? '??' : null);
+                  const playerNum = latestPlayers !== null ? latestPlayers : 0;
                   const playerPct = Math.min(100, Math.max(6, (playerNum / maxPlayersCount) * 100));
 
                   const daysOld = metadata?.lastModified
@@ -418,10 +447,11 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                       >
                         {!isTemplate && (
                           <span
-                            style={{ fontWeight: 600, fontFamily: 'monospace' }}
-                            title={players === '??' ? 'Active players unknown' : `${players} Active Players`}
+                            style={{ fontWeight: 600, fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            title={playersDisplay === '??' ? 'Active players unknown' : `${playersDisplay} Active Players`}
                           >
-                            {players}
+                            {trendIcon && <span style={{ fontSize: '0.65rem' }} title={trendTitle}>{trendIcon}</span>}
+                            {playersDisplay}
                           </span>
                         )}
                         {daysOld !== null && (
@@ -524,8 +554,8 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                 {typeof currentLatestPlayerCount === 'number' && (
                   <div className="status-badge-item">
                     <span className="status-label">Active Players</span>
-                    <span className="status-value highlight-value">
-                      👥 {currentLatestPlayerCount} Active Players
+                    <span className="status-value highlight-value" title={currentTrendTitle}>
+                      👥 {currentLatestPlayerCount} Active Players {currentTrendIcon}
                     </span>
                   </div>
                 )}
