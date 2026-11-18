@@ -1,7 +1,7 @@
 import '@cloudflare/workers-types';
 
 export interface Env {
-  KV: KVNamespace;
+  MY_KV: KVNamespace;
   ASSETS: {
     fetch: (request: Request) => Promise<Response>;
   };
@@ -53,7 +53,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
   // --- Manifest API route: /api/manifest ---
   if (url.pathname === '/api/manifest') {
     try {
-      const manifestStr = await env.KV.get('manifest');
+      const manifestStr = await env.MY_KV.get('manifest');
       if (manifestStr !== null) {
         const manifestData = JSON.parse(manifestStr);
         return Response.json(manifestData, {
@@ -81,7 +81,7 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
     const kvKey = `${id}_players`; // e.g. 'agora' -> 'agora_players'
 
     try {
-      const playerCountStr = await env.KV.get(kvKey);
+      const playerCountStr = await env.MY_KV.get(kvKey);
 
       if (playerCountStr !== null) {
         const playerCount = parseInt(playerCountStr, 10);
@@ -140,12 +140,12 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
   // --- Handle Nomicron Rules API route ---
   if (url.pathname.startsWith('/api/nomicron')) {
     try {
-      let nomicronStr = await env.KV.get('nomicron');
+      let nomicronStr = await env.MY_KV.get('nomicron');
 
       if (nomicronStr === null) {
         const { text, lastModified } = await fetchAndParseNomicronRules();
         const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
-        await env.KV.put('nomicron', JSON.stringify(payload));
+        await env.MY_KV.put('nomicron', JSON.stringify(payload));
         await updateManifest(env, 'nomicron', { lastModified });
         nomicronStr = JSON.stringify(payload);
       }
@@ -167,12 +167,12 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
   // --- Handle Agora Rules API route ---
   if (url.pathname.startsWith('/api/agora')) {
     try {
-      let agoraRulesStr = await env.KV.get('agora');
+      let agoraRulesStr = await env.MY_KV.get('agora');
 
       if (agoraRulesStr === null) {
         const { text, lastModified } = await fetchAndParseAgoraRules();
         const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
-        await env.KV.put('agora', JSON.stringify(payload));
+        await env.MY_KV.put('agora', JSON.stringify(payload));
         await updateManifest(env, 'agora', { lastModified });
         agoraRulesStr = JSON.stringify(payload);
       }
@@ -194,12 +194,12 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
   // --- Handle BlogNomic Rules API route ---
   if (url.pathname.startsWith('/api/blognomic')) {
     try {
-      let blognomicRulesStr = await env.KV.get('blognomic');
+      let blognomicRulesStr = await env.MY_KV.get('blognomic');
 
       if (blognomicRulesStr === null) {
         const { text, lastModified } = await fetchAndParseBlogNomicRules();
         const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
-        await env.KV.put('blognomic', JSON.stringify(payload));
+        await env.MY_KV.put('blognomic', JSON.stringify(payload));
         await updateManifest(env, 'blognomic', { lastModified });
         blognomicRulesStr = JSON.stringify(payload);
       }
@@ -221,12 +221,12 @@ async function handleRouting(request: Request, env: Env, url: URL): Promise<Resp
   // --- Handle Infinite Nomic Rules API route ---
   if (url.pathname.startsWith('/api/infinite')) {
     try {
-      let infiniteRulesStr = await env.KV.get('infinite');
+      let infiniteRulesStr = await env.MY_KV.get('infinite');
 
       if (infiniteRulesStr === null) {
         const { text } = await fetchAndParseInfiniteNomicRules();
         const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
-        await env.KV.put('infinite', JSON.stringify(payload));
+        await env.MY_KV.put('infinite', JSON.stringify(payload));
         infiniteRulesStr = JSON.stringify(payload);
       }
 
@@ -264,7 +264,7 @@ async function updateManifest(env: Env, id: string, updates: { players?: number;
   let manifest: Record<string, { players?: number; player_counts?: number[]; lastModified?: string | null }> = {};
 
   try {
-    const existing = await env.KV.get('manifest', { type: 'json' });
+    const existing = await env.MY_KV.get('manifest', { type: 'json' });
     if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
       manifest = existing as Record<string, { players?: number; player_counts?: number[]; lastModified?: string | null }>;
     }
@@ -285,7 +285,7 @@ async function updateManifest(env: Env, id: string, updates: { players?: number;
     ...(playerCountsArray.length > 0 ? { player_counts: playerCountsArray } : {}),
   };
 
-  await env.KV.put('manifest', JSON.stringify(manifest));
+  await env.MY_KV.put('manifest', JSON.stringify(manifest));
 }
 
 // --- Helper: Fetch and parse Nomicron rules ---
@@ -445,7 +445,7 @@ async function fetchAndParseInfiniteNomicRules(): Promise<{ text: string }> {
 async function updateNomicronRules(env: Env) {
   const { text, lastModified } = await fetchAndParseNomicronRules();
   const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
-  await env.KV.put('nomicron', JSON.stringify(payload));
+  await env.MY_KV.put('nomicron', JSON.stringify(payload));
   await updateManifest(env, 'nomicron', { lastModified });
   console.log(`Successfully updated Nomicron rules KV and manifest lastModified: ${lastModified}`);
 }
@@ -455,7 +455,7 @@ async function updateAgoraRules(env: Env) {
   const { text, lastModified } = await fetchAndParseAgoraRules();
   const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
 
-  await env.KV.put('agora', JSON.stringify(payload));
+  await env.MY_KV.put('agora', JSON.stringify(payload));
   await updateManifest(env, 'agora', { lastModified });
 
   console.log(`Successfully updated Agora rules KV and manifest lastModified: ${lastModified}`);
@@ -466,7 +466,7 @@ async function updateBlogNomicRules(env: Env) {
   const { text, lastModified } = await fetchAndParseBlogNomicRules();
   const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
 
-  await env.KV.put('blognomic', JSON.stringify(payload));
+  await env.MY_KV.put('blognomic', JSON.stringify(payload));
   await updateManifest(env, 'blognomic', { lastModified });
 
   console.log(`Successfully updated BlogNomic rules KV and manifest lastModified: ${lastModified}`);
@@ -477,7 +477,7 @@ async function updateInfiniteNomicRules(env: Env) {
   const { text } = await fetchAndParseInfiniteNomicRules();
   const payload = { rules: text, checkedAt: new Date().toISOString().slice(5) };
 
-  await env.KV.put('infinite', JSON.stringify(payload));
+  await env.MY_KV.put('infinite', JSON.stringify(payload));
 
   console.log('Successfully updated Infinite Nomic rules KV (omitting manifest update).');
 }
@@ -518,7 +518,7 @@ async function updateAgoraPlayers(env: Env) {
 
   if (playerMatch && playerMatch[1]) {
     const playerCount = parseInt(playerMatch[1], 10);
-    await env.KV.put('agora_players', playerCount.toString());
+    await env.MY_KV.put('agora_players', playerCount.toString());
     await updateManifest(env, 'agora', { players: playerCount });
     console.log(`Successfully updated Agora player count to KV and manifest: ${playerCount}`);
   } else {
@@ -542,7 +542,7 @@ async function updateNomicronPlayers(env: Env) {
 
   if (match && match[1]) {
     const playerCount = parseInt(match[1], 10);
-    await env.KV.put('nomicron_players', playerCount.toString());
+    await env.MY_KV.put('nomicron_players', playerCount.toString());
     await updateManifest(env, 'nomicron', { players: playerCount });
     console.log(`Successfully updated Nomicron player count to KV and manifest: ${playerCount}`);
   } else {
@@ -566,7 +566,7 @@ async function updateBlogNomicPlayers(env: Env) {
 
   if (match && match[1]) {
     const playerCount = parseInt(match[1], 10);
-    await env.KV.put('blognomic_players', playerCount.toString());
+    await env.MY_KV.put('blognomic_players', playerCount.toString());
     await updateManifest(env, 'blognomic', { players: playerCount });
     console.log(`Successfully updated BlogNomic player count to KV and manifest: ${playerCount}`);
   } else {
