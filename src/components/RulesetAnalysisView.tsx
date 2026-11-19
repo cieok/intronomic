@@ -9,6 +9,11 @@ import { getDateColor, formatRelativeAge } from '../utils/dateUtils';
 import { useRulesetData } from '../useRulesetData';
 import { useManifest } from '../useManifest';
 
+interface PlayerCountParts {
+  oldest: number;
+  diff: number | null;
+}
+
 export function RulesetAnalysisView() {
   const { rulesets, dataMap } = useRulesetData();
   const { manifest } = useManifest();
@@ -58,16 +63,36 @@ export function RulesetAnalysisView() {
     return Math.min(100, Math.max(0, (sqrtVal / sqrtMax) * 100));
   };
 
-  const formatPlayerCountDisplay = (counts?: number[]) => {
+  const getPlayerCountParts = (counts?: number[]): PlayerCountParts | null => {
     if (!Array.isArray(counts) || counts.length === 0) return null;
     const oldest = counts[0];
-    const latest = counts[counts.length - 1];
-    const diff = latest - oldest;
-
     if (counts.length === 1) {
-      return `${oldest}`;
+      return { oldest, diff: null };
     }
-    return diff >= 0 ? `${oldest} + ${diff}` : `${oldest} - ${Math.abs(diff)}`;
+    const latest = counts[counts.length - 1];
+    return { oldest, diff: latest - oldest };
+  };
+
+  const renderPlayerCountDisplay = (parts: PlayerCountParts | null) => {
+    if (!parts) return null;
+    if (parts.diff === null) {
+      return <>{parts.oldest}</>;
+    }
+
+    const isPositive = parts.diff >= 0;
+    const sign = isPositive ? '+' : '-';
+    const deltaValue = Math.abs(parts.diff);
+    const deltaColor = isPositive ? '#16a34a' : '#dc2626';
+
+    return (
+      <>
+        {parts.oldest}{' '}
+        <span style={{ color: deltaColor, fontWeight: 600 }}>
+          {sign}
+          <span style={{ marginLeft: '0.12em' }}>{deltaValue}</span>
+        </span>
+      </>
+    );
   };
 
   const currentRuleset = rulesets.find((r) => r.id === activeTabId) || null;
@@ -76,7 +101,7 @@ export function RulesetAnalysisView() {
 
   const currentCounts = currentManifest?.player_counts;
   const currentLatestPlayerCount = Array.isArray(currentCounts) && currentCounts.length > 0 ? currentCounts[currentCounts.length - 1] : undefined;
-  const currentPlayerCountDisplay = formatPlayerCountDisplay(currentCounts);
+  const currentPlayerCountParts = getPlayerCountParts(currentCounts);
 
   const dateColor = useMemo(() => {
     return getDateColor(currentManifest?.lastModified);
@@ -292,9 +317,9 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   const counts = metadata?.player_counts;
 
                   const latestPlayers = !isTemplate && Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : null;
-                  const formattedPlayers = !isTemplate ? formatPlayerCountDisplay(counts) : null;
+                  const playerParts = !isTemplate ? getPlayerCountParts(counts) : null;
 
-                  const playersDisplay = formattedPlayers !== null ? formattedPlayers : (!isTemplate ? '??' : null);
+                  const playersDisplay = playerParts !== null ? renderPlayerCountDisplay(playerParts) : (!isTemplate ? '??' : null);
                   const playerNum = latestPlayers !== null ? latestPlayers : 0;
                   const playerPct = Math.min(100, Math.max(6, (playerNum / maxPlayersCount) * 100));
 
@@ -434,14 +459,14 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   </div>
                 )}
 
-                {typeof currentLatestPlayerCount === 'number' && currentPlayerCountDisplay && (
+                {typeof currentLatestPlayerCount === 'number' && currentPlayerCountParts && (
                   <div className="status-badge-item">
                     <span className="status-label">Active Players</span>
                     <span
                       className="status-value highlight-value"
                       title={`${currentLatestPlayerCount} total active players (was ${currentCounts![0]} approximately 4 weeks ago)`}
                     >
-                      👥 {currentPlayerCountDisplay} Active Players
+                      👥 {renderPlayerCountDisplay(currentPlayerCountParts)} Active Players
                     </span>
                   </div>
                 )}
