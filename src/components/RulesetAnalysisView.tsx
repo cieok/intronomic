@@ -95,13 +95,32 @@ export function RulesetAnalysisView() {
     );
   };
 
+  const getColumnTooltip = (indexFromEnd: number, count: number) => {
+    const playerLabel = count === 1 ? 'player' : 'players';
+    if (indexFromEnd === 0) {
+      return `${count} active ${playerLabel} (latest update)`;
+    }
+    if (indexFromEnd === 1) {
+      return `${count} active ${playerLabel} (1 week older than latest update)`;
+    }
+    return `${count} active ${playerLabel} (${indexFromEnd} weeks older than latest update)`;
+  };
+
   const currentRuleset = rulesets.find((r) => r.id === activeTabId) || null;
   const currentMetrics = currentRuleset ? dataMap[currentRuleset.id] : null;
   const currentManifest = currentRuleset ? manifest[currentRuleset.id] : undefined;
 
   const currentCounts = currentManifest?.player_counts;
-  const currentLatestPlayerCount = Array.isArray(currentCounts) && currentCounts.length > 0 ? currentCounts[currentCounts.length - 1] : undefined;
-  const currentPlayerCountParts = getPlayerCountParts(currentCounts);
+  const visiblePlayerCounts = useMemo(() => {
+    if (!Array.isArray(currentCounts) || currentCounts.length === 0) return [];
+    const validCounts = currentCounts.filter((c): c is number => typeof c === 'number' && !Number.isNaN(c));
+    return validCounts.slice(-4);
+  }, [currentCounts]);
+
+  const maxVisiblePlayerCount = useMemo(() => {
+    if (visiblePlayerCounts.length === 0) return 1;
+    return Math.max(...visiblePlayerCounts, 1);
+  }, [visiblePlayerCounts]);
 
   const dateColor = useMemo(() => {
     return getDateColor(currentManifest?.lastModified);
@@ -297,6 +316,10 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
     backgroundImage: 'linear-gradient(to right, #0077b6, #00b4d8)',
   };
 
+  const showRulesetAge = currentRuleset?.category !== 'Templates' && Boolean(relativeAge);
+  const showPlayerColumns = visiblePlayerCounts.length > 0;
+  const maxBarHeightPx = 48;
+
   return (
     <div className="layout-body">
       <aside className="sidebar-nav">
@@ -448,9 +471,9 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
               </div>
             </div>
 
-            {(relativeAge || typeof currentLatestPlayerCount === 'number') && (
+            {(showRulesetAge || showPlayerColumns) && (
               <div className="game-status-banner">
-                {currentRuleset.category !== 'Templates' && relativeAge && (
+                {showRulesetAge && (
                   <div className="status-badge-item">
                     <span className="status-label">Ruleset Age</span>
                     <span className="status-value" style={{ color: dateColor }}>
@@ -459,15 +482,61 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   </div>
                 )}
 
-                {typeof currentLatestPlayerCount === 'number' && currentPlayerCountParts && (
+                {showPlayerColumns && (
                   <div className="status-badge-item">
-                    <span className="status-label">Active Players</span>
-                    <span
-                      className="status-value highlight-value"
-                      title={`${currentLatestPlayerCount} total active players (was ${currentCounts![0]} approximately 4 weeks ago)`}
+                    <span className="status-label">Active players in last 4 weeks</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        gap: '10px',
+                        paddingTop: '6px',
+                      }}
                     >
-                      👥 {renderPlayerCountDisplay(currentPlayerCountParts)} Active Players
-                    </span>
+                      {visiblePlayerCounts.map((count, idx) => {
+                        const safeCount = Math.max(0, count);
+                        const barHeightPx =
+                          safeCount === 0
+                            ? 4
+                            : Math.max(8, Math.round((safeCount / maxVisiblePlayerCount) * maxBarHeightPx));
+                        const indexFromEnd = visiblePlayerCounts.length - 1 - idx;
+                        const tooltip = getColumnTooltip(indexFromEnd, count);
+
+                        return (
+                          <div
+                            key={`${idx}-${count}`}
+                            title={tooltip}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                              minWidth: '28px',
+                              cursor: 'help',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '20px',
+                                height: `${barHeightPx}px`,
+                                backgroundColor: '#00b4d8',
+                                borderRadius: '4px 4px 0 0',
+                              }}
+                            />
+                            <span
+                              style={{
+                                marginTop: '4px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                lineHeight: 1.1,
+                              }}
+                            >
+                              {count}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
