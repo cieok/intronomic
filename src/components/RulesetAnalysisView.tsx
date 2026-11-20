@@ -342,7 +342,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
                   const latestPlayers = !isTemplate && Array.isArray(counts) && counts.length > 0 ? counts[counts.length - 1] : null;
                   const playerParts = !isTemplate ? getPlayerCountParts(counts) : null;
 
-                  const playersDisplay = playerParts !== null ? renderPlayerCountDisplay(playerParts) : (!isTemplate ? '??' : null);
+                  const playersDisplay = playerParts !== null ? renderPlayerCountDisplay(playerParts) : (!isTemplate ? '?' : null);
                   const playerNum = latestPlayers !== null ? latestPlayers : 0;
                   const playerPct = Math.min(100, Math.max(6, (playerNum / maxPlayersCount) * 100));
 
