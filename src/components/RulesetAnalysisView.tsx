@@ -414,7 +414,7 @@ export const PRECOMPUTED_RULESETS: PrecomputedRuleset[] = ${JSON.stringify(expor
         {!activeTabId || !currentRuleset ? (
           <div className="card welcome-card">
             <h2>Welcome to NomicHub</h2>
-            <p>Select any game from the sidebar to dive in. Try out <strong>Trusty Dice</strong> for a quick roll, or check out <strong>External Resources</strong> to explore further.</p>
+            <p>Select any game from the sidebar to dive in. Try out <strong>Crypto Dice</strong> for a quick roll, or check out <strong>External Resources</strong> to explore further.</p>
           </div>
         ) : !currentMetrics || currentMetrics.loading ? (
           <p>Loading ruleset data...</p>

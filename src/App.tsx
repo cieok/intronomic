@@ -71,7 +71,7 @@ export function App() {
             className={`nav-tab-btn ${currentSection === 'dice' ? 'active' : ''}`}
             onClick={() => navigateToSection('dice')}
           >
-            🎲 Trusty Dice
+            🎲 Crypto Dice
           </button>
           <button
             className={`nav-tab-btn ${currentSection === 'links' ? 'active' : ''}`}
